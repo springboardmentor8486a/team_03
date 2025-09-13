@@ -1,0 +1,11 @@
+Today I started Landing Page:
+
+⦁	Navbar -->Done
+⦁	SideNavbar-->Done
+⦁	HeroSection-->Done
+
+Need to Done:
+⦁	Features
+⦁	Impact
+⦁	Community
+⦁	Footer 
