@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./src/config/db.js";
-// import userRoutes from "./src/routes/userRoutes.js";
+import userRoutes from "./src/routes/userRoutes.js";
 // import { notFound, errorHandler } from "./src/middleware/errorMiddleware.js";
 
 dotenv.config();
@@ -16,7 +16,7 @@ app.use(cors());
 connectDB();
 
 // Routes
-// app.use("/api/users", userRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");
