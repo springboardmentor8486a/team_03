@@ -1,9 +1,10 @@
-import React from 'react'
+// src/routes/userRoutes.js
+import express from "express";
+import { registerUser, loginUser } from "../controllers/userController.js";
 
-const userRoutes = () => {
-  return (
-    <div>userRoutes</div>
-  )
-}
+const router = express.Router();
 
-export default userRoutes
+router.post("/register", registerUser);
+router.post("/login", loginUser);
+
+export default router;
