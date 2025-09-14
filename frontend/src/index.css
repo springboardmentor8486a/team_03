@@ -9,6 +9,8 @@ html, body, #root {
   width: 100%;
   min-height: 100%;
   background-color: white; /* use Tailwind bg instead of hardcoding */
+  
+  @apply bg-gray-50 text-gray-800;
 }
 
 
