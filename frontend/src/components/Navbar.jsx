@@ -18,7 +18,7 @@ const Navbar = () => {
         </div>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex gap-6 items-center text-gray-400 hover:*:text-black cursor-pointer">
+        <div className=" flex text-gray-600 hover:*:text-gray-900 gap-3 transition-colors">
           <a href="#features">Features</a>
           <a href="#howitworks">How it Works</a>
           <a href="#impact">Impact</a>

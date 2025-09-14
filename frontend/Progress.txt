@@ -3,9 +3,8 @@ Today I started Landing Page:
 ⦁	Navbar -->Done
 ⦁	SideNavbar-->Done
 ⦁	HeroSection-->Done
+⦁	Features -->Done
+⦁	Impact-->Done
+⦁	Community-->Done
+⦁	Footer -->Done
 
-Need to Done:
-⦁	Features
-⦁	Impact
-⦁	Community
-⦁	Footer 
