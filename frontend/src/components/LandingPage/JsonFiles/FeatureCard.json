@@ -1,0 +1,46 @@
+{
+  "features": [
+    {
+      "title": "Photo Reporting",
+      "description": "Capture and submit issues with photos and location data for accurate documentation",
+      "icon": "Camera",
+      "color": "text-purple-500",
+      "bgColor": "bg-purple-100"
+    },
+    {
+      "title": "Location Tracking",
+      "description": "Automatically tag reports with precise GPS coordinates for quick municipal response",
+      "icon": "MapPin",
+      "color": "text-green-500",
+      "bgColor": "bg-green-100"
+    },
+    {
+      "title": "Real-time Updates",
+      "description": "Get notified when your reported issues are acknowledged, in progress, or resolved",
+      "icon": "Bell",
+      "color": "text-orange-500",
+      "bgColor": "bg-orange-100"
+    },
+    {
+      "title": "Community Voting",
+      "description": "Vote on issue priority and engage with your neighbors to amplify important problems",
+      "icon": "Users",
+      "color": "text-pink-500",
+      "bgColor": "bg-pink-100"
+    },
+    {
+      "title": "Progress Analytics",
+      "description": "Track response rates, resolution times, and community engagement metrics",
+      "icon": "BarChart",
+      "color": "text-blue-500",
+      "bgColor": "bg-blue-100"
+    },
+    {
+      "title": "Quick Actions",
+      "description": "Report issues in under 30 seconds with our streamlined mobile-first interface",
+      "icon": "Zap",
+      "color": "text-indigo-500",
+      "bgColor": "bg-indigo-100"
+    }
+  ]
+}
