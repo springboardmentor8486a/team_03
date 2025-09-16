@@ -1,8 +1,7 @@
-
-/* #root {
-  max-width: 1280px;
+/* App.css */
 
 /* Root container */
+#root {
   margin: 0 auto;
   padding: 0;
   text-align: center;
@@ -71,7 +70,6 @@
   margin-bottom: 1.5rem;
 }
 
-.read-the-docs {
-  color: #888;
-} */
-
+.card h3 {
+  margin-top: 0;
+}

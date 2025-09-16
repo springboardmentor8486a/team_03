@@ -9,9 +9,16 @@ import {
   User,
   Settings,
 } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
+
+  // active / normal styles
+  const activeClass =
+    "flex items-center space-x-4 text-purple-600 font-semibold text-lg";
+  const normalClass =
+    "flex items-center space-x-4 text-gray-700 font-medium text-lg hover:text-purple-600";
 
   return (
     <div
@@ -39,55 +46,61 @@ export default function Sidebar() {
 
       {/* Menu */}
       <nav className="flex-1 p-6 space-y-6">
-        <a
-          href="#"
-          className="flex items-center space-x-4 text-purple-600 font-semibold text-lg hover:text-purple-700"
+        <NavLink
+          to="/"
+          className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <LayoutDashboard size={26} />
           {isOpen && <span>Dashboard</span>}
-        </a>
-        <a
-          href="#"
-          className="flex items-center space-x-4 text-gray-700 font-medium text-lg hover:text-purple-600"
+        </NavLink>
+
+        <NavLink
+          to="/reports"
+          className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <FileText size={26} />
           {isOpen && <span>My Reports</span>}
-        </a>
-        <a
-          href="#"
-          className="flex items-center space-x-4 text-gray-700 font-medium text-lg hover:text-purple-600"
+        </NavLink>
+
+        <NavLink
+          to="/analytics"
+          className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <BarChart2 size={26} />
           {isOpen && <span>Analytics</span>}
-        </a>
-        <a
-          href="#"
-          className="flex items-center space-x-4 text-gray-700 font-medium text-lg hover:text-purple-600"
+        </NavLink>
+
+        <NavLink
+          to="/map"
+          className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <Map size={26} />
           {isOpen && <span>Area Map</span>}
-        </a>
-        <a
-          href="#"
-          className="flex items-center space-x-4 text-gray-700 font-medium text-lg hover:text-purple-600"
+        </NavLink>
+
+        <NavLink
+          to="/community"
+          className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <Users size={26} />
           {isOpen && <span>Community</span>}
-        </a>
-        <a
-          href="#"
-          className="flex items-center space-x-4 text-gray-700 font-medium text-lg hover:text-purple-600"
+        </NavLink>
+
+        <NavLink
+          to="/profile"
+          className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <User size={26} />
           {isOpen && <span>Profile</span>}
-        </a>
-        <a
-          href="#"
-          className="flex items-center space-x-4 text-gray-700 font-medium text-lg hover:text-purple-600"
+        </NavLink>
+
+        <NavLink
+          to="/settings"
+          className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <Settings size={26} />
           {isOpen && <span>Settings</span>}
-        </a>
+        </NavLink>
       </nav>
     </div>
   );
