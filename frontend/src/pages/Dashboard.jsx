@@ -9,13 +9,15 @@ import {
   FiFilter,
 } from "react-icons/fi";
 import { useState } from "react";
-import Sidebar from "../components/DashSidebar";
-import Navbar from "../components/Navbar";
-import StatCard from "../components/StatCard";
-import ReportCard from "../components/ReportCard";
+import { useNavigate } from "react-router-dom";
+import Sidebar from "../components/Dashboard/DashSidebar";
+import Navbar from "../components/Dashboard/Navbar";
+import StatCard from "../components/Dashboard/StatCard";
+import ReportCard from "../components/Dashboard/ReportCard";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("My Reports");
+  const navigate = useNavigate();
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -44,7 +46,10 @@ export default function Dashboard() {
                 <FiFilter size={16} />
                 Filter
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white text-sm font-medium shadow-md hover:opacity-90 transition">
+              <button
+                onClick={() => navigate("/reportissue")}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white text-sm font-medium shadow-md hover:opacity-90 transition"
+              >
                 + Report Issue
               </button>
             </div>

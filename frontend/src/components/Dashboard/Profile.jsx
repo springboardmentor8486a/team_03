@@ -1,0 +1,357 @@
+import React, { useState } from "react";
+import {
+  FiArrowLeft,
+  FiUser,
+  FiPhone,
+  FiMapPin,
+  FiBell,
+  FiShield,
+  FiCamera,
+  FiFileText,
+  FiAlertTriangle,
+  FiZap,
+  FiDroplet,
+  FiLock,
+  FiTrash2,
+} from "react-icons/fi";
+import { useNavigate } from "react-router-dom"; // ✅ React Router
+
+export default function Profile() {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    fullName: "John Doe",
+    email: "a@gmail.com",
+    phone: "+1 (555) 123-4567",
+    city: "New York",
+    address: "123 Main Street, Downtown",
+    bio: "Active community member passionate about making our neighborhood better.",
+    notifications: {
+      emailUpdates: true,
+      smsAlerts: false,
+      pushNotifications: true,
+      weeklyDigest: true,
+    },
+    privacy: {
+      visibility: "Public",
+      showLocation: true,
+      showReports: true,
+      allowContact: true,
+    },
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleCheckboxChange = (section, key) => {
+    setFormData({
+      ...formData,
+      [section]: {
+        ...formData[section],
+        [key]: !formData[section][key],
+      },
+    });
+  };
+
+  const handleSubmit = () => {
+    console.log("Submitting:", formData);
+    navigate("/");
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-6 px-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <div
+          onClick={() => navigate("/")}
+          className="flex items-center text-sm text-gray-600 gap-2 cursor-pointer hover:text-purple-600 transition"
+        >
+          <FiArrowLeft className="text-gray-500" />
+          <span>Back to Dashboard</span>
+          <span className="text-gray-400">/</span>
+          <span className="font-semibold text-gray-700">Profile Settings</span>
+        </div>
+        <button
+          onClick={handleSubmit}
+          className="px-4 py-2 bg-purple-600 text-white rounded-md shadow hover:bg-purple-700"
+        >
+          Save Changes
+        </button>
+      </div>
+
+      <div className="max-w-6xl mx-auto flex gap-6">
+        {/* Sidebar */}
+        <div className="w-1/4 bg-white shadow rounded-2xl p-6 self-start">
+          {/* Profile Avatar */}
+          <div className="flex flex-col items-center relative">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative">
+              JD
+              <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow cursor-pointer">
+                <FiCamera className="text-gray-600 w-4 h-4" />
+              </div>
+            </div>
+            <h2 className="mt-4 font-semibold text-gray-800 text-lg">
+              {formData.fullName}
+            </h2>
+            <p className="text-sm text-gray-500">{formData.email}</p>
+            <span className="mt-2 px-3 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-md">
+              Active Member
+            </span>
+          </div>
+
+          {/* Location & Verification */}
+          <div className="mt-6 space-y-2 text-sm text-gray-600">
+            <p className="flex items-center gap-2">
+              <FiMapPin className="text-gray-500" /> {formData.city}
+            </p>
+            <p className="flex items-center gap-2">
+              <FiShield className="text-gray-500" /> Verified Account
+            </p>
+          </div>
+
+          {/* Divider */}
+          <hr className="my-6 border-gray-200" />
+
+          {/* Community Stats */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-800">
+              Community Stats
+            </h3>
+            <div className="flex justify-around mt-4">
+              <div className="text-center">
+                <p className="text-purple-600 text-xl font-bold">6</p>
+                <p className="text-gray-500 text-sm">Reports</p>
+              </div>
+              <div className="text-center">
+                <p className="text-green-600 text-xl font-bold">2</p>
+                <p className="text-gray-500 text-sm">Resolved</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <hr className="my-6 border-gray-200" />
+
+          {/* Report Types */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-800">Report Types</h3>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm hover:shadow-md cursor-pointer">
+                <FiFileText className="text-blue-500 text-xl" />
+                <span className="text-xs mt-2 font-medium">General</span>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm hover:shadow-md cursor-pointer">
+                <FiAlertTriangle className="text-red-500 text-xl" />
+                <span className="text-xs mt-2 font-medium">Potholes</span>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm hover:shadow-md cursor-pointer">
+                <FiZap className="text-yellow-500 text-xl" />
+                <span className="text-xs mt-2 font-medium">Lighting</span>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm hover:shadow-md cursor-pointer">
+                <FiDroplet className="text-blue-600 text-xl" />
+                <span className="text-xs mt-2 font-medium">Water</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 space-y-10">
+          {/* Personal Info */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="flex items-center gap-2 font-semibold text-gray-800 text-lg">
+              <FiUser /> Personal Information
+            </h3>
+            <div className="grid grid-cols-2 gap-8 mt-4">
+              {[
+                { name: "fullName", label: "Full Name", type: "text" },
+                { name: "email", label: "Email Address", type: "email" },
+                { name: "phone", label: "Phone Number", type: "text" },
+                { name: "city", label: "City", type: "text" },
+              ].map(({ name, label, type }) => (
+                <div key={name}>
+                  <label className="block text-sm font-medium text-gray-600 text-left">
+                    {label}
+                  </label>
+                  <input
+                    type={type}
+                    name={name}
+                    value={formData[name]}
+                    onChange={handleChange}
+                    className="w-full border rounded p-2 mt-1 bg-gray-100 focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+              ))}
+
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-600 text-left">
+                  Address
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="w-full border rounded p-2 mt-1 bg-gray-100 focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-600 text-left">
+                  Bio
+                </label>
+                <textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleChange}
+                  className="w-full border rounded p-2 mt-1 bg-gray-100 focus:ring-2 focus:ring-purple-500"
+                  rows="3"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          {/* Notification Preferences */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="flex items-center gap-2 font-semibold text-gray-700 text-lg">
+              <FiBell className="text-purple-600" /> Notification Preferences
+            </h3>
+            <div className="mt-4 space-y-6">
+              {[
+                {
+                  key: "emailUpdates",
+                  label: "Email Updates",
+                  description: "Receive important updates and announcements via email.",
+                },
+                {
+                  key: "smsAlerts",
+                  label: "SMS Alerts",
+                  description: "Get urgent alerts and notifications directly on your phone.",
+                },
+                {
+                  key: "pushNotifications",
+                  label: "Push Notifications",
+                  description: "Allow push notifications on your device for real-time updates.",
+                },
+                {
+                  key: "weeklyDigest",
+                  label: "Weekly Digest",
+                  description: "Get a weekly summary of activities and updates.",
+                },
+              ].map(({ key, label, description }) => (
+                <div
+                  key={key}
+                  className="flex items-center justify-between p-4 border rounded-md bg-gray-50"
+                >
+                  <div className="text-left space-y-2">
+                    <p className="font-medium">{label}</p>
+                    <p className="text-sm text-gray-500">{description}</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={formData.notifications[key]}
+                    onChange={() => handleCheckboxChange("notifications", key)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Privacy & Security */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="flex items-center gap-2 font-semibold text-gray-700 text-lg">
+              <FiLock className="text-purple-600" /> Privacy & Security
+            </h3>
+            <div className="mt-4 space-y-5">
+              <div className="flex items-center justify-between p-4 border rounded-md bg-gray-50">
+                <div className="space-y-2">
+                  <p className="font-medium text-left">Profile Visibility</p>
+                  <p className="text-sm text-gray-500">
+                    Control who can see your profile information
+                  </p>
+                </div>
+                <select
+                  value={formData.privacy.visibility}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      privacy: { ...formData.privacy, visibility: e.target.value },
+                    })
+                  }
+                  className="border rounded p-2 text-sm bg-gray-100 focus:ring-2 focus:ring-purple-500"
+                >
+                  <option>Public</option>
+                  <option>Private</option>
+                  <option>Friends Only</option>
+                </select>
+              </div>
+
+              {["showLocation", "showReports", "allowContact"].map((key) => (
+                <div
+                  key={key}
+                  className="flex items-center justify-between p-4 border rounded-md bg-gray-50 text-left"
+                >
+                  <div className="space-y-2">
+                    <p className="font-medium">
+                      {key === "showLocation"
+                        ? "Show Location"
+                        : key === "showReports"
+                        ? "Show Reports"
+                        : "Allow Contact"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {key === "showLocation"
+                        ? "Display your general location to other users"
+                        : key === "showReports"
+                        ? "Allow others to see your public reports"
+                        : "Let community members contact you directly"}
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={formData.privacy[key]}
+                    onChange={() => handleCheckboxChange("privacy", key)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Danger Zone */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="flex items-center gap-2 font-semibold text-red-600 text-lg">
+              <FiTrash2 /> Danger Zone
+            </h3>
+            <div className="mt-4 space-y-5 text-left">
+              <div className="flex items-center justify-between p-4 border rounded-md bg-red-50">
+                <div className="space-y-2">
+                  <p className="font-medium text-red-700">Delete Account</p>
+                  <p className="text-sm text-red-500">
+                    Permanently delete your account and all associated data
+                  </p>
+                </div>
+                <button className="bg-red-600 text-white px-3 py-1 rounded">
+                  Delete Account
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-md bg-yellow-50">
+                <div>
+                  <p className="font-medium text-yellow-700">Export Data</p>
+                  <p className="text-sm text-yellow-600">
+                    Download a copy of all your data
+                  </p>
+                </div>
+                <button className="bg-yellow-500 text-white px-3 py-1 rounded">
+                  Export Data
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
