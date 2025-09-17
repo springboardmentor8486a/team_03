@@ -1,7 +1,7 @@
 // src/models/userModel.js
 import mongoose from "mongoose";
 
-const userSchema = mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, trim: true },
@@ -12,6 +12,9 @@ const userSchema = mongoose.Schema(
       enum: ["user", "volunteer", "admin"],
       default: "user",
     },
+    otp: { type: String },      // For password reset OTP
+    otpExpiry: { type: Date },  // Expiry time for OTP
+    isOtpVerified: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -1,10 +1,19 @@
 // src/routes/userRoutes.js
 import express from "express";
-import { registerUser, loginUser } from "../controllers/userController.js";
+import {
+  registerUser,
+  loginUser,
+  forgotPassword,
+  verifyOtp,
+  resetPassword,
+} from "../controllers/userController.js";
 
 const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/forgot-password", forgotPassword);
+router.post("/verify-otp", verifyOtp);
+router.post("/reset-password", resetPassword);
 
-export default router;
+export { router as userRoutes };
