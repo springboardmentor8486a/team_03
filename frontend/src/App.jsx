@@ -3,14 +3,18 @@ import "./App.css";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./components/Dashboard/Profile";
 import ReportIssue from "./components/Dashboard/ReportIssue"
+import Home from "./pages/Home";
 
 function App() {
   return (
+    <>
+    <Home/>
     <Routes>
       <Route path="/" element={<Dashboard />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/reportissue" element={<ReportIssue/>}/>
     </Routes>
+    </>
   );
 }
 
