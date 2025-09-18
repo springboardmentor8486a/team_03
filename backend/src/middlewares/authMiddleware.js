@@ -1,6 +1,8 @@
-// backend/src/middleware/authMiddleware.js
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
+// backend/src/middlewares/authMiddleware.js
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Generate JWT Token
 const generateToken = (userData) => {
@@ -27,7 +29,7 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-module.exports = {
+export {
   generateToken,
   verifyToken,
 };

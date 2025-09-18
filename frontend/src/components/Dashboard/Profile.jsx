@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FiArrowLeft,
   FiUser,
@@ -18,14 +18,18 @@ import { useNavigate } from "react-router-dom"; // ✅ React Router
 
 export default function Profile() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [formData, setFormData] = useState({
-    fullName: "John Doe",
-    email: "a@gmail.com",
-    phone: "+1 (555) 123-4567",
-    city: "New York",
-    address: "123 Main Street, Downtown",
-    bio: "Active community member passionate about making our neighborhood better.",
+    name: "",
+    email: "",
+    phone: "",
+    city: "",
+    address: "",
+    bio: "",
     notifications: {
       emailUpdates: true,
       smsAlerts: false,
@@ -39,6 +43,78 @@ export default function Profile() {
       allowContact: true,
     },
   });
+
+  // Get token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem('token');
+  };
+
+  // API base URL - adjust this based on your backend URL
+  const API_BASE_URL = 'http://localhost:5000/api';
+
+  // Fetch user profile on component mount
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        setError("No authentication token found. Please login.");
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/users/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError("Authentication failed. Please login again.");
+          localStorage.removeItem('token');
+          navigate('/login');
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const userData = await response.json();
+      
+      // Map backend data to frontend form structure
+      setFormData({
+        name: userData.name || "",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        city: userData.city || "",
+        address: userData.address || "",
+        bio: userData.bio || "",
+        notifications: {
+          emailUpdates: userData.notifications?.emailUpdates ?? true,
+          smsAlerts: userData.notifications?.smsAlerts ?? false,
+          pushNotifications: userData.notifications?.pushNotifications ?? true,
+          weeklyDigest: userData.notifications?.weeklyDigest ?? true,
+        },
+        privacy: {
+          visibility: userData.privacy?.visibility || "Public",
+          showLocation: userData.privacy?.showLocation ?? true,
+          showReports: userData.privacy?.showReports ?? true,
+          allowContact: userData.privacy?.allowContact ?? true,
+        },
+      });
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setError("Failed to load profile data. Please try again.");
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -55,10 +131,86 @@ export default function Profile() {
     });
   };
 
-  const handleSubmit = () => {
-    console.log("Submitting:", formData);
-    navigate("/");
+  const handleSubmit = async () => {
+    setSaving(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        setError("No authentication token found. Please login.");
+        setSaving(false);
+        return;
+      }
+
+      // Prepare data for backend (exclude email as it shouldn't be editable)
+      const updateData = {
+        name: formData.name,
+        phone: formData.phone,
+        city: formData.city,
+        address: formData.address,
+        bio: formData.bio,
+        notifications: formData.notifications,
+        privacy: formData.privacy,
+      };
+
+      const response = await fetch(`${API_BASE_URL}/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError("Authentication failed. Please login again.");
+          localStorage.removeItem('token');
+          navigate('/login');
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const updatedUser = await response.json();
+      setSuccess("Profile updated successfully!");
+      
+      // Update local data with response
+      setFormData(prev => ({
+        ...prev,
+        name: updatedUser.name,
+        phone: updatedUser.phone,
+        city: updatedUser.city,
+        address: updatedUser.address,
+        bio: updatedUser.bio,
+        notifications: updatedUser.notifications,
+        privacy: updatedUser.privacy,
+      }));
+
+      setTimeout(() => {
+        setSuccess("");
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setError("Failed to update profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 px-6">
@@ -75,11 +227,28 @@ export default function Profile() {
         </div>
         <button
           onClick={handleSubmit}
-          className="px-4 py-2 bg-purple-600 text-white rounded-md shadow hover:bg-purple-700"
+          disabled={saving}
+          className={`px-4 py-2 text-white rounded-md shadow transition ${
+            saving 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-purple-600 hover:bg-purple-700'
+          }`}
         >
-          Save Changes
+          {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
+
+      {/* Error/Success Messages */}
+      {error && (
+        <div className="max-w-6xl mx-auto mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="max-w-6xl mx-auto mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
+          {success}
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto flex gap-6">
         {/* Sidebar */}
@@ -87,13 +256,21 @@ export default function Profile() {
           {/* Profile Avatar */}
           <div className="flex flex-col items-center relative">
             <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative">
-              JD
+              {formData.name
+                ? formData.name
+                    .split(' ')
+                    .map(word => word[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2)
+                : 'U'
+              }
               <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow cursor-pointer">
                 <FiCamera className="text-gray-600 w-4 h-4" />
               </div>
             </div>
             <h2 className="mt-4 font-semibold text-gray-800 text-lg">
-              {formData.fullName}
+              {formData.name}
             </h2>
             <p className="text-sm text-gray-500">{formData.email}</p>
             <span className="mt-2 px-3 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-md">
@@ -167,11 +344,11 @@ export default function Profile() {
             </h3>
             <div className="grid grid-cols-2 gap-8 mt-4">
               {[
-                { name: "fullName", label: "Full Name", type: "text" },
-                { name: "email", label: "Email Address", type: "email" },
+                { name: "name", label: "Full Name", type: "text" },
+                { name: "email", label: "Email Address", type: "email", disabled: true },
                 { name: "phone", label: "Phone Number", type: "text" },
                 { name: "city", label: "City", type: "text" },
-              ].map(({ name, label, type }) => (
+              ].map(({ name, label, type, disabled }) => (
                 <div key={name}>
                   <label className="block text-sm font-medium text-gray-600 text-left">
                     {label}
@@ -181,7 +358,12 @@ export default function Profile() {
                     name={name}
                     value={formData[name]}
                     onChange={handleChange}
-                    className="w-full border rounded p-2 mt-1 bg-gray-100 focus:ring-2 focus:ring-purple-500"
+                    disabled={disabled}
+                    className={`w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-purple-500 ${
+                      disabled 
+                        ? 'bg-gray-200 cursor-not-allowed' 
+                        : 'bg-gray-100'
+                    }`}
                   />
                 </div>
               ))}

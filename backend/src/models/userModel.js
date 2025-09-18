@@ -12,6 +12,38 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "volunteer", "admin"],
       default: "user",
     },
+    // Profile additional fields
+    city: { type: String, trim: true },
+    address: { type: String, trim: true },
+    bio: { type: String, trim: true },
+    
+    // Notification preferences
+    notifications: {
+      emailUpdates: { type: Boolean, default: true },
+      smsAlerts: { type: Boolean, default: false },
+      pushNotifications: { type: Boolean, default: true },
+      weeklyDigest: { type: Boolean, default: true },
+    },
+    
+    // Privacy settings
+    privacy: {
+      visibility: { 
+        type: String, 
+        enum: ["Public", "Private", "Friends Only"], 
+        default: "Public" 
+      },
+      showLocation: { type: Boolean, default: true },
+      showReports: { type: Boolean, default: true },
+      allowContact: { type: Boolean, default: true },
+    },
+    
+    // Stats (can be computed but stored for performance)
+    stats: {
+      totalReports: { type: Number, default: 0 },
+      resolvedReports: { type: Number, default: 0 },
+    },
+    
+    // Authentication fields
     otp: { type: String },      // For password reset OTP
     otpExpiry: { type: Date },  // Expiry time for OTP
     isOtpVerified: { type: Boolean, default: false },
