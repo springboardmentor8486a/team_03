@@ -186,6 +186,71 @@ const resetPassword = asyncHandler(async (req, res) => {
   res.json({ message: "Password reset successful. You can log in now." });
 });
 
+/* ---------------- GET PROFILE ---------------- */
+// @desc    Get current user's profile
+// @route   GET /api/users/profile
+// @access  Private
+const getProfile = asyncHandler(async (req, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401);
+    throw new Error("Unauthorized");
+  }
+
+  const user = await User.findById(userId).select("-password -otp -otpExpiry -isOtpVerified");
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  res.json(user);
+});
+
+/* ---------------- UPDATE PROFILE ---------------- */
+// @desc    Update current user's profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateProfile = asyncHandler(async (req, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401);
+    throw new Error("Unauthorized");
+  }
+
+  const { name, email, phone, location } = req.body;
+
+  const user = await User.findById(userId);
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  // If email is changing, ensure uniqueness
+  if (email && email !== user.email) {
+    const emailTaken = await User.findOne({ email });
+    if (emailTaken) {
+      res.status(400);
+      throw new Error("Email already in use");
+    }
+    user.email = email;
+  }
+
+  if (name) user.name = name;
+  if (phone) user.phone = phone;
+  if (location !== undefined) user.location = location;
+
+  await user.save();
+
+  res.json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    location: user.location,
+    role: user.role,
+  });
+});
+
 /* ---------------- JWT GENERATOR ---------------- */
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -199,4 +264,6 @@ export {
   forgotPassword,
   verifyOtp,
   resetPassword,
+  getProfile,
+  updateProfile,
 };
