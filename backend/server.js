@@ -1,11 +1,17 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import connectDB from "./src/config/db.js";
 import { userRoutes } from "./src/routes/userRoutes.js";
+
 dotenv.config();
 const app = express();
 
 // Middleware
+app.use(cors({
+    origin: ["http://localhost:3000", "http://localhost:5173"], // Add your frontend URLs
+    credentials: true,
+}));
 app.use(express.json());
 
 // Routes

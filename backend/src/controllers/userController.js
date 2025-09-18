@@ -193,10 +193,132 @@ const generateToken = (id) => {
   });
 };
 
+/* ---------------- GET USER PROFILE ---------------- */
+// @desc    Get user profile
+// @route   GET /api/users/profile
+// @access  Private
+const getUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id).select("-password -otp -otpExpiry -isOtpVerified");
+  
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  res.json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    city: user.city,
+    address: user.address,
+    bio: user.bio,
+    role: user.role,
+    notifications: user.notifications,
+    privacy: user.privacy,
+    stats: user.stats,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  });
+});
+
+/* ---------------- UPDATE USER PROFILE ---------------- */
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  console.log("📝 BEFORE UPDATE - User data:", {
+    name: user.name,
+    phone: user.phone,
+    city: user.city,
+    address: user.address,
+    bio: user.bio
+  });
+
+  // Extract allowed fields from request body
+  const {
+    name,
+    phone,
+    city,
+    address,
+    bio,
+    notifications,
+    privacy,
+  } = req.body;
+
+  console.log("📥 UPDATE REQUEST - Received data:", req.body);
+
+  // Update only provided fields
+  if (name !== undefined) user.name = name;
+  if (phone !== undefined) user.phone = phone;
+  if (city !== undefined) user.city = city;
+  if (address !== undefined) user.address = address;
+  if (bio !== undefined) user.bio = bio;
+
+  // Update notification preferences
+  if (notifications) {
+    user.notifications = {
+      ...user.notifications,
+      ...notifications,
+    };
+  }
+
+  // Update privacy settings
+  if (privacy) {
+    user.privacy = {
+      ...user.privacy,
+      ...privacy,
+    };
+  }
+
+  console.log("📝 BEFORE SAVE - Modified user data:", {
+    name: user.name,
+    phone: user.phone,
+    city: user.city,
+    address: user.address,
+    bio: user.bio
+  });
+
+  const updatedUser = await user.save();
+
+  console.log("✅ AFTER SAVE - Database confirmed save with updatedAt:", updatedUser.updatedAt);
+  console.log("💾 FINAL DATABASE DATA:", {
+    name: updatedUser.name,
+    phone: updatedUser.phone,
+    city: updatedUser.city,
+    address: updatedUser.address,
+    bio: updatedUser.bio
+  });
+
+  res.json({
+    _id: updatedUser._id,
+    name: updatedUser.name,
+    email: updatedUser.email,
+    phone: updatedUser.phone,
+    city: updatedUser.city,
+    address: updatedUser.address,
+    bio: updatedUser.bio,
+    role: updatedUser.role,
+    notifications: updatedUser.notifications,
+    privacy: updatedUser.privacy,
+    stats: updatedUser.stats,
+    updatedAt: updatedUser.updatedAt,
+  });
+});
+
 export {
   registerUser,
   loginUser,
   forgotPassword,
   verifyOtp,
   resetPassword,
+  getUserProfile,
+  updateUserProfile,
 };
