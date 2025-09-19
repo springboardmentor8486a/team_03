@@ -108,7 +108,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
   }
 
   if (process.env.NODE_ENV !== "production") {
-    console.log("[DEV] OTP for", email, ":", otp);
+
     return res.json({ message: "OTP sent to registered email", otp });
   }
 
@@ -135,7 +135,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
 
   // In dev, log stored OTP to help debugging
   if (process.env.NODE_ENV !== "production") {
-    console.log("[DEV] Stored OTP:", String(user.otp), "Provided OTP:", String(otp).trim());
+
   }
 
   if (user.otpExpiry < Date.now()) {
@@ -186,6 +186,92 @@ const resetPassword = asyncHandler(async (req, res) => {
   res.json({ message: "Password reset successful. You can log in now." });
 });
 
+/* ---------------- GET USER PROFILE ---------------- */
+// @desc    Get user profile
+// @route   GET /api/users/profile
+// @access  Private
+const getUserProfile = asyncHandler(async (req, res) => {
+
+
+  try {
+    const user = await User.findById(req.user.id).select(
+      '-password -otp -otpExpiry -isOtpVerified'
+    );
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+
+
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    res.status(500);
+    throw new Error("Failed to fetch user profile");
+  }
+});
+
+/* ---------------- UPDATE USER PROFILE ---------------- */
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateUserProfile = asyncHandler(async (req, res) => {
+
+
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    // Fields that can be updated
+    const allowedFields = [
+      'name', 'phone', 'city', 'address', 'bio', 
+      'notifications', 'privacy'
+    ];
+
+    // Update only allowed fields
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        if (field === 'notifications' || field === 'privacy') {
+          // Handle nested objects
+          user[field] = { ...user[field].toObject(), ...req.body[field] };
+        } else {
+          user[field] = req.body[field];
+        }
+      }
+    });
+
+    const updatedUser = await user.save();
+
+    // Remove sensitive fields from response
+    const userResponse = updatedUser.toObject();
+    delete userResponse.password;
+    delete userResponse.otp;
+    delete userResponse.otpExpiry;
+    delete userResponse.isOtpVerified;
+
+
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: userResponse
+    });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    res.status(500);
+    throw new Error("Failed to update user profile");
+  }
+});
+
 /* ---------------- JWT GENERATOR ---------------- */
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -199,4 +285,6 @@ export {
   forgotPassword,
   verifyOtp,
   resetPassword,
+  getUserProfile,
+  updateUserProfile,
 };

@@ -1,16 +1,17 @@
 // backend/src/middleware/authMiddleware.js
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Generate JWT Token
-const generateToken = (userData) => {
+export const generateToken = (userData) => {
   return jwt.sign(userData, process.env.JWT_SECRET, {
     expiresIn: '1h',
   });
 };
 
 //  Verify JWT Token Middleware
-const verifyToken = (req, res, next) => {
+export const verifyToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Format: Bearer <token>
 
@@ -25,9 +26,4 @@ const verifyToken = (req, res, next) => {
   } catch (err) {
     return res.status(403).json({ message: 'Invalid or expired token.' });
   }
-};
-
-module.exports = {
-  generateToken,
-  verifyToken,
 };

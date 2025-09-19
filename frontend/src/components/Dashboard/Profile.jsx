@@ -56,7 +56,7 @@ export default function Profile() {
   };
 
   const handleSubmit = () => {
-    console.log("Submitting:", formData);
+
     navigate("/");
   };
 
