@@ -85,6 +85,7 @@ export default function Profile() {
         },
       });
 
+      localStorage.setItem("username", userData.name || "User");
       setLoading(false);
     } catch (err) {
       console.error("Error fetching profile:", err);
@@ -134,16 +135,18 @@ export default function Profile() {
       const updatedUser = response.data;
 
       setSuccess("Profile updated successfully!");
-      setFormData(prev => ({
-        ...prev,
-        name: updatedUser.name,
-        phone: updatedUser.phone,
-        city: updatedUser.city,
-        address: updatedUser.address,
-        bio: updatedUser.bio,
-        notifications: updatedUser.notifications,
-        privacy: updatedUser.privacy,
-      }));
+      if (updatedUser) {
+        setFormData((prev) => ({
+          ...prev,
+          name: updatedUser.name || prev.name,
+          phone: updatedUser.phone || prev.phone,
+          city: updatedUser.city || prev.city,
+          address: updatedUser.address || prev.address,
+          bio: updatedUser.bio || prev.bio,
+          notifications: updatedUser.notifications || prev.notifications,
+          privacy: updatedUser.privacy || prev.privacy,
+        }));
+      }
 
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
@@ -151,9 +154,11 @@ export default function Profile() {
       if (err.response?.status === 401) {
         setError("Authentication failed. Please login again.");
         localStorage.removeItem("token");
-        navigate("/Dashboard/profile");
+        navigate("/dashboard");
       } else {
-        setError("Failed to update profile. Please try again.");
+        setError(
+          err.response?.data?.message || "Failed to update profile. Please try again."
+        );
       }
     } finally {
       setSaving(false);
@@ -208,7 +213,7 @@ export default function Profile() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/dashboard")}
           className="flex items-center text-sm text-gray-600 gap-2 cursor-pointer hover:text-purple-600 transition"
         >
           <FiArrowLeft className="text-gray-500" />
@@ -220,9 +225,7 @@ export default function Profile() {
           onClick={handleSubmit}
           disabled={saving}
           className={`px-4 py-2 text-white rounded-md shadow transition ${
-            saving
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-purple-600 hover:bg-purple-700"
+            saving ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
           }`}
         >
           {saving ? "Saving..." : "Save Changes"}
@@ -249,12 +252,12 @@ export default function Profile() {
             <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative">
               {formData.name
                 ? formData.name
-                    .split(' ')
-                    .map(word => word[0])
-                    .join('')
+                    .split(" ")
+                    .map((word) => word[0])
+                    .join("")
                     .toUpperCase()
                     .slice(0, 2)
-                : 'U'}
+                : "U"}
               <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow cursor-pointer">
                 <FiCamera className="text-gray-600 w-4 h-4" />
               </div>
@@ -324,24 +327,26 @@ export default function Profile() {
               <FiUser /> Personal Information
             </h3>
             <div className="grid grid-cols-2 gap-8 mt-4">
-              {[{ name: "name", label: "Full Name", type: "text" },
+              {[
+                { name: "name", label: "Full Name", type: "text" },
                 { name: "email", label: "Email Address", type: "email", disabled: true },
                 { name: "phone", label: "Phone Number", type: "text" },
-                { name: "city", label: "City", type: "text" }].map(({ name, label, type, disabled }) => (
-                  <div key={name}>
-                    <label className="block text-sm font-medium text-gray-600 text-left">{label}</label>
-                    <input
-                      type={type}
-                      name={name}
-                      value={formData[name]}
-                      onChange={handleChange}
-                      disabled={disabled}
-                      className={`w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-purple-500 ${
-                        disabled ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-100'
-                      }`}
-                    />
-                  </div>
-                ))}
+                { name: "city", label: "City", type: "text" },
+              ].map(({ name, label, type, disabled }) => (
+                <div key={name}>
+                  <label className="block text-sm font-medium text-gray-600 text-left">{label}</label>
+                  <input
+                    type={type}
+                    name={name}
+                    value={formData[name]}
+                    onChange={handleChange}
+                    disabled={disabled}
+                    className={`w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-purple-500 ${
+                      disabled ? "bg-gray-200 cursor-not-allowed" : "bg-gray-100"
+                    }`}
+                  />
+                </div>
+              ))}
 
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-600 text-left">Address</label>
@@ -374,10 +379,26 @@ export default function Profile() {
             </h3>
             <div className="mt-4 space-y-6">
               {[
-                { key: "emailUpdates", label: "Email Updates", description: "Receive important updates and announcements via email." },
-                { key: "smsAlerts", label: "SMS Alerts", description: "Get urgent alerts and notifications directly on your phone." },
-                { key: "pushNotifications", label: "Push Notifications", description: "Allow push notifications on your device for real-time updates." },
-                { key: "weeklyDigest", label: "Weekly Digest", description: "Get a weekly summary of activities and updates." },
+                {
+                  key: "emailUpdates",
+                  label: "Email Updates",
+                  description: "Receive important updates and announcements via email.",
+                },
+                {
+                  key: "smsAlerts",
+                  label: "SMS Alerts",
+                  description: "Get urgent alerts and notifications directly on your phone.",
+                },
+                {
+                  key: "pushNotifications",
+                  label: "Push Notifications",
+                  description: "Allow push notifications on your device for real-time updates.",
+                },
+                {
+                  key: "weeklyDigest",
+                  label: "Weekly Digest",
+                  description: "Get a weekly summary of activities and updates.",
+                },
               ].map(({ key, label, description }) => (
                 <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50">
                   <div className="text-left space-y-2">
@@ -407,7 +428,9 @@ export default function Profile() {
                 </div>
                 <select
                   value={formData.privacy.visibility}
-                  onChange={(e) => setFormData({ ...formData, privacy: { ...formData.privacy, visibility: e.target.value } })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, privacy: { ...formData.privacy, visibility: e.target.value } })
+                  }
                   className="border rounded p-2 text-sm bg-gray-100 focus:ring-2 focus:ring-purple-500"
                 >
                   <option>Public</option>
@@ -420,7 +443,11 @@ export default function Profile() {
                 <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50 text-left">
                   <div className="space-y-2">
                     <p className="font-medium">
-                      {key === "showLocation" ? "Show Location" : key === "showReports" ? "Show Reports" : "Allow Contact"}
+                      {key === "showLocation"
+                        ? "Show Location"
+                        : key === "showReports"
+                        ? "Show Reports"
+                        : "Allow Contact"}
                     </p>
                     <p className="text-sm text-gray-500">
                       {key === "showLocation"
@@ -451,10 +478,7 @@ export default function Profile() {
                   <p className="font-medium text-red-700">Delete Account</p>
                   <p className="text-sm text-red-500">Permanently delete your account and all associated data</p>
                 </div>
-                <button
-                  onClick={handleDeleteAccount}
-                  className="bg-red-600 text-white px-3 py-1 rounded"
-                >
+                <button onClick={handleDeleteAccount} className="bg-red-600 text-white px-3 py-1 rounded">
                   Delete Account
                 </button>
               </div>
@@ -464,10 +488,7 @@ export default function Profile() {
                   <p className="font-medium text-yellow-700">Export Data</p>
                   <p className="text-sm text-yellow-600">Download a copy of all your data</p>
                 </div>
-                <button
-                  onClick={handleExportData}
-                  className="bg-yellow-500 text-white px-3 py-1 rounded"
-                >
+                <button onClick={handleExportData} className="bg-yellow-500 text-white px-3 py-1 rounded">
                   Export Data
                 </button>
               </div>

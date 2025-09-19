@@ -8,7 +8,7 @@ import {
   FiMapPin,
   FiFilter,
 } from "react-icons/fi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Dashboard/DashSidebar";
 import Navbar from "../components/Dashboard/Navbar";
@@ -17,7 +17,14 @@ import ReportCard from "../components/Dashboard/ReportCard";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("My Reports");
+  const [username, setUsername] = useState("User"); // default fallback
   const navigate = useNavigate();
+
+  // Fetch username from localStorage when component mounts
+  useEffect(() => {
+    const storedName = localStorage.getItem("username");
+    if (storedName) setUsername(storedName);
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -32,7 +39,7 @@ export default function Dashboard() {
             {/* Left Section */}
             <div>
               <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
-                Welcome back, John Doe!
+                Welcome back, {username}!
               </h1>
               <p className="flex items-center text-gray-600 text-sm mt-1">
                 <FiMapPin size={16} className="mr-1 text-purple-600" />
@@ -104,7 +111,7 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Stats Row - moved ABOVE reports */}
+          {/* Stats Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-lg shadow">
               <p className="text-purple-600 font-medium flex items-center gap-2">
@@ -135,59 +142,58 @@ export default function Dashboard() {
           </div>
 
           {/* Reports List */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ReportCard
-                title="Broken streetlight on Main St"
-                category="Infrastructure"
-                priority="High"
-                location="Main St & 5th Ave"
-                status="In Review"
-                description="The streetlight has been out for 3 days and poses a safety risk."
-                submitted="2025-09-12"
-                assignedTo="John Doe"
-              />
-              <ReportCard
-                title="Pothole on 5th Avenue"
-                category="Roads"
-                priority="Medium"
-                location="5th Avenue"
-                status="Received"
-                description="Large pothole causing vehicle damage."
-                submitted="2025-09-11"
-                assignedTo="Jane Smith"
-              />
-              <ReportCard
-                title="Graffiti on City Hall Wall"
-                category="Public Property"
-                priority="Low"
-                location="City Hall"
-                status="Resolved"
-                description="Graffiti removed and wall repainted."
-                submitted="2025-09-10"
-                assignedTo="Alex Johnson"
-              />
-              <ReportCard
-                title="Water leakage in park fountain"
-                category="Parks & Recreation"
-                priority="Medium"
-                location="Central Park"
-                status="Pending"
-                description="Fountain leaking water continuously, needs maintenance."
-                submitted="2025-09-13"
-                assignedTo="Emily Davis"
-              />
-              <ReportCard
-                title="Damaged bench in playground"
-                category="Public Property"
-                priority="Low"
-                location="Sunset Playground"
-                status="Rejected"
-                description="Bench reported but maintenance team found it safe to use."
-                submitted="2025-09-09"
-                assignedTo="Michael Lee"
-              />
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ReportCard
+              title="Broken streetlight on Main St"
+              category="Infrastructure"
+              priority="High"
+              location="Main St & 5th Ave"
+              status="In Review"
+              description="The streetlight has been out for 3 days and poses a safety risk."
+              submitted="2025-09-12"
+              assignedTo="John Doe"
+            />
+            <ReportCard
+              title="Pothole on 5th Avenue"
+              category="Roads"
+              priority="Medium"
+              location="5th Avenue"
+              status="Received"
+              description="Large pothole causing vehicle damage."
+              submitted="2025-09-11"
+              assignedTo="Jane Smith"
+            />
+            <ReportCard
+              title="Graffiti on City Hall Wall"
+              category="Public Property"
+              priority="Low"
+              location="City Hall"
+              status="Resolved"
+              description="Graffiti removed and wall repainted."
+              submitted="2025-09-10"
+              assignedTo="Alex Johnson"
+            />
+            <ReportCard
+              title="Water leakage in park fountain"
+              category="Parks & Recreation"
+              priority="Medium"
+              location="Central Park"
+              status="Pending"
+              description="Fountain leaking water continuously, needs maintenance."
+              submitted="2025-09-13"
+              assignedTo="Emily Davis"
+            />
+            <ReportCard
+              title="Damaged bench in playground"
+              category="Public Property"
+              priority="Low"
+              location="Sunset Playground"
+              status="Rejected"
+              description="Bench reported but maintenance team found it safe to use."
+              submitted="2025-09-09"
+              assignedTo="Michael Lee"
+            />
+          </div>
         </div>
       </div>
     </div>
