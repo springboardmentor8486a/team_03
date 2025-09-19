@@ -27,7 +27,7 @@ const Navbar = () => {
 
         {/* Desktop Buttons */}
         <div className="hidden md:flex gap-4 items-center">
-          <Signbtn />
+          <Signbtn  />
           <Button name="Get Started" />
         </div>
 

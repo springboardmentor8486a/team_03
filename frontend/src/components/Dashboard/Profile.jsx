@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   FiArrowLeft,
   FiUser,
@@ -14,7 +15,7 @@ import {
   FiLock,
   FiTrash2,
 } from "react-icons/fi";
-import { useNavigate } from "react-router-dom"; // ✅ React Router
+import { useNavigate } from "react-router-dom";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -44,49 +45,25 @@ export default function Profile() {
     },
   });
 
-  // Get token from localStorage
-  const getAuthToken = () => {
-    return localStorage.getItem('token');
-  };
+  const getAuthToken = () => localStorage.getItem("token");
 
-  // API base URL - adjust this based on your backend URL
-  const API_BASE_URL = 'http://localhost:5000/api';
+  // Axios instance
+  const api = axios.create({
+    baseURL: "http://localhost:5000/api/users/profile",
+    headers: {
+      Authorization: `Bearer ${getAuthToken()}`,
+    },
+  });
 
-  // Fetch user profile on component mount
   useEffect(() => {
     fetchUserProfile();
   }, []);
 
   const fetchUserProfile = async () => {
     try {
-      const token = getAuthToken();
-      if (!token) {
-        setError("No authentication token found. Please login.");
-        setLoading(false);
-        return;
-      }
+      const response = await api.get("/");
+      const userData = response.data;
 
-      const response = await fetch(`${API_BASE_URL}/users/profile`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setError("Authentication failed. Please login again.");
-          localStorage.removeItem('token');
-          navigate('/login');
-          return;
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const userData = await response.json();
-      
-      // Map backend data to frontend form structure
       setFormData({
         name: userData.name || "",
         email: userData.email || "",
@@ -107,11 +84,17 @@ export default function Profile() {
           allowContact: userData.privacy?.allowContact ?? true,
         },
       });
-      
+
       setLoading(false);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setError("Failed to load profile data. Please try again.");
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+      if (err.response?.status === 401) {
+        setError("Authentication failed. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/login");
+      } else {
+        setError("Failed to load profile data. Please try again.");
+      }
       setLoading(false);
     }
   };
@@ -137,14 +120,6 @@ export default function Profile() {
     setSuccess("");
 
     try {
-      const token = getAuthToken();
-      if (!token) {
-        setError("No authentication token found. Please login.");
-        setSaving(false);
-        return;
-      }
-
-      // Prepare data for backend (exclude email as it shouldn't be editable)
       const updateData = {
         name: formData.name,
         phone: formData.phone,
@@ -155,29 +130,10 @@ export default function Profile() {
         privacy: formData.privacy,
       };
 
-      const response = await fetch(`${API_BASE_URL}/users/profile`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateData),
-      });
+      const response = await api.put("/", updateData);
+      const updatedUser = response.data;
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          setError("Authentication failed. Please login again.");
-          localStorage.removeItem('token');
-          navigate('/login');
-          return;
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const updatedUser = await response.json();
       setSuccess("Profile updated successfully!");
-      
-      // Update local data with response
       setFormData(prev => ({
         ...prev,
         name: updatedUser.name,
@@ -189,15 +145,50 @@ export default function Profile() {
         privacy: updatedUser.privacy,
       }));
 
-      setTimeout(() => {
-        setSuccess("");
-      }, 3000);
-
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      setError("Failed to update profile. Please try again.");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      if (err.response?.status === 401) {
+        setError("Authentication failed. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/Dashboard/profile");
+      } else {
+        setError("Failed to update profile. Please try again.");
+      }
     } finally {
       setSaving(false);
+    }
+  };
+
+  // DELETE ACCOUNT
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("Are you sure you want to permanently delete your account?")) return;
+
+    try {
+      await api.delete("/");
+      localStorage.removeItem("token");
+      alert("Account deleted successfully!");
+      navigate("/login");
+    } catch (err) {
+      console.error("Error deleting account:", err);
+      setError("Failed to delete account. Please try again.");
+    }
+  };
+
+  // EXPORT DATA
+  const handleExportData = async () => {
+    try {
+      const response = await api.get("/export", { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "user_data.json");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error("Error exporting data:", err);
+      setError("Failed to export data. Please try again.");
     }
   };
 
@@ -229,12 +220,12 @@ export default function Profile() {
           onClick={handleSubmit}
           disabled={saving}
           className={`px-4 py-2 text-white rounded-md shadow transition ${
-            saving 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-purple-600 hover:bg-purple-700'
+            saving
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-purple-600 hover:bg-purple-700"
           }`}
         >
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? "Saving..." : "Save Changes"}
         </button>
       </div>
 
@@ -250,10 +241,10 @@ export default function Profile() {
         </div>
       )}
 
+      {/* Main Layout */}
       <div className="max-w-6xl mx-auto flex gap-6">
         {/* Sidebar */}
         <div className="w-1/4 bg-white shadow rounded-2xl p-6 self-start">
-          {/* Profile Avatar */}
           <div className="flex flex-col items-center relative">
             <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative">
               {formData.name
@@ -263,22 +254,18 @@ export default function Profile() {
                     .join('')
                     .toUpperCase()
                     .slice(0, 2)
-                : 'U'
-              }
+                : 'U'}
               <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow cursor-pointer">
                 <FiCamera className="text-gray-600 w-4 h-4" />
               </div>
             </div>
-            <h2 className="mt-4 font-semibold text-gray-800 text-lg">
-              {formData.name}
-            </h2>
+            <h2 className="mt-4 font-semibold text-gray-800 text-lg">{formData.name}</h2>
             <p className="text-sm text-gray-500">{formData.email}</p>
             <span className="mt-2 px-3 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-md">
               Active Member
             </span>
           </div>
 
-          {/* Location & Verification */}
           <div className="mt-6 space-y-2 text-sm text-gray-600">
             <p className="flex items-center gap-2">
               <FiMapPin className="text-gray-500" /> {formData.city}
@@ -288,14 +275,10 @@ export default function Profile() {
             </p>
           </div>
 
-          {/* Divider */}
           <hr className="my-6 border-gray-200" />
 
-          {/* Community Stats */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-800">
-              Community Stats
-            </h3>
+            <h3 className="text-sm font-semibold text-gray-800">Community Stats</h3>
             <div className="flex justify-around mt-4">
               <div className="text-center">
                 <p className="text-purple-600 text-xl font-bold">6</p>
@@ -308,10 +291,8 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Divider */}
           <hr className="my-6 border-gray-200" />
 
-          {/* Report Types */}
           <div>
             <h3 className="text-sm font-semibold text-gray-800">Report Types</h3>
             <div className="grid grid-cols-2 gap-3 mt-4">
@@ -343,35 +324,27 @@ export default function Profile() {
               <FiUser /> Personal Information
             </h3>
             <div className="grid grid-cols-2 gap-8 mt-4">
-              {[
-                { name: "name", label: "Full Name", type: "text" },
+              {[{ name: "name", label: "Full Name", type: "text" },
                 { name: "email", label: "Email Address", type: "email", disabled: true },
                 { name: "phone", label: "Phone Number", type: "text" },
-                { name: "city", label: "City", type: "text" },
-              ].map(({ name, label, type, disabled }) => (
-                <div key={name}>
-                  <label className="block text-sm font-medium text-gray-600 text-left">
-                    {label}
-                  </label>
-                  <input
-                    type={type}
-                    name={name}
-                    value={formData[name]}
-                    onChange={handleChange}
-                    disabled={disabled}
-                    className={`w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-purple-500 ${
-                      disabled 
-                        ? 'bg-gray-200 cursor-not-allowed' 
-                        : 'bg-gray-100'
-                    }`}
-                  />
-                </div>
-              ))}
+                { name: "city", label: "City", type: "text" }].map(({ name, label, type, disabled }) => (
+                  <div key={name}>
+                    <label className="block text-sm font-medium text-gray-600 text-left">{label}</label>
+                    <input
+                      type={type}
+                      name={name}
+                      value={formData[name]}
+                      onChange={handleChange}
+                      disabled={disabled}
+                      className={`w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-purple-500 ${
+                        disabled ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-100'
+                      }`}
+                    />
+                  </div>
+                ))}
 
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-600 text-left">
-                  Address
-                </label>
+                <label className="block text-sm font-medium text-gray-600 text-left">Address</label>
                 <input
                   type="text"
                   name="address"
@@ -380,10 +353,9 @@ export default function Profile() {
                   className="w-full border rounded p-2 mt-1 bg-gray-100 focus:ring-2 focus:ring-purple-500"
                 />
               </div>
+
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-600 text-left">
-                  Bio
-                </label>
+                <label className="block text-sm font-medium text-gray-600 text-left">Bio</label>
                 <textarea
                   name="bio"
                   value={formData.bio}
@@ -402,31 +374,12 @@ export default function Profile() {
             </h3>
             <div className="mt-4 space-y-6">
               {[
-                {
-                  key: "emailUpdates",
-                  label: "Email Updates",
-                  description: "Receive important updates and announcements via email.",
-                },
-                {
-                  key: "smsAlerts",
-                  label: "SMS Alerts",
-                  description: "Get urgent alerts and notifications directly on your phone.",
-                },
-                {
-                  key: "pushNotifications",
-                  label: "Push Notifications",
-                  description: "Allow push notifications on your device for real-time updates.",
-                },
-                {
-                  key: "weeklyDigest",
-                  label: "Weekly Digest",
-                  description: "Get a weekly summary of activities and updates.",
-                },
+                { key: "emailUpdates", label: "Email Updates", description: "Receive important updates and announcements via email." },
+                { key: "smsAlerts", label: "SMS Alerts", description: "Get urgent alerts and notifications directly on your phone." },
+                { key: "pushNotifications", label: "Push Notifications", description: "Allow push notifications on your device for real-time updates." },
+                { key: "weeklyDigest", label: "Weekly Digest", description: "Get a weekly summary of activities and updates." },
               ].map(({ key, label, description }) => (
-                <div
-                  key={key}
-                  className="flex items-center justify-between p-4 border rounded-md bg-gray-50"
-                >
+                <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50">
                   <div className="text-left space-y-2">
                     <p className="font-medium">{label}</p>
                     <p className="text-sm text-gray-500">{description}</p>
@@ -450,18 +403,11 @@ export default function Profile() {
               <div className="flex items-center justify-between p-4 border rounded-md bg-gray-50">
                 <div className="space-y-2">
                   <p className="font-medium text-left">Profile Visibility</p>
-                  <p className="text-sm text-gray-500">
-                    Control who can see your profile information
-                  </p>
+                  <p className="text-sm text-gray-500">Control who can see your profile information</p>
                 </div>
                 <select
                   value={formData.privacy.visibility}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      privacy: { ...formData.privacy, visibility: e.target.value },
-                    })
-                  }
+                  onChange={(e) => setFormData({ ...formData, privacy: { ...formData.privacy, visibility: e.target.value } })}
                   className="border rounded p-2 text-sm bg-gray-100 focus:ring-2 focus:ring-purple-500"
                 >
                   <option>Public</option>
@@ -471,17 +417,10 @@ export default function Profile() {
               </div>
 
               {["showLocation", "showReports", "allowContact"].map((key) => (
-                <div
-                  key={key}
-                  className="flex items-center justify-between p-4 border rounded-md bg-gray-50 text-left"
-                >
+                <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50 text-left">
                   <div className="space-y-2">
                     <p className="font-medium">
-                      {key === "showLocation"
-                        ? "Show Location"
-                        : key === "showReports"
-                        ? "Show Reports"
-                        : "Allow Contact"}
+                      {key === "showLocation" ? "Show Location" : key === "showReports" ? "Show Reports" : "Allow Contact"}
                     </p>
                     <p className="text-sm text-gray-500">
                       {key === "showLocation"
@@ -510,11 +449,12 @@ export default function Profile() {
               <div className="flex items-center justify-between p-4 border rounded-md bg-red-50">
                 <div className="space-y-2">
                   <p className="font-medium text-red-700">Delete Account</p>
-                  <p className="text-sm text-red-500">
-                    Permanently delete your account and all associated data
-                  </p>
+                  <p className="text-sm text-red-500">Permanently delete your account and all associated data</p>
                 </div>
-                <button className="bg-red-600 text-white px-3 py-1 rounded">
+                <button
+                  onClick={handleDeleteAccount}
+                  className="bg-red-600 text-white px-3 py-1 rounded"
+                >
                   Delete Account
                 </button>
               </div>
@@ -522,11 +462,12 @@ export default function Profile() {
               <div className="flex items-center justify-between p-4 border rounded-md bg-yellow-50">
                 <div>
                   <p className="font-medium text-yellow-700">Export Data</p>
-                  <p className="text-sm text-yellow-600">
-                    Download a copy of all your data
-                  </p>
+                  <p className="text-sm text-yellow-600">Download a copy of all your data</p>
                 </div>
-                <button className="bg-yellow-500 text-white px-3 py-1 rounded">
+                <button
+                  onClick={handleExportData}
+                  className="bg-yellow-500 text-white px-3 py-1 rounded"
+                >
                   Export Data
                 </button>
               </div>
