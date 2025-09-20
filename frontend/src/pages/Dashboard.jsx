@@ -18,6 +18,7 @@ import ReportCard from "../components/Dashboard/ReportCard";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("My Reports");
+  const [username, setUsername] = useState("User");
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -47,48 +48,44 @@ export default function Dashboard() {
 
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/complaints/my', {
+      setError('');
+      
+      const response = await fetch('http://localhost:5000/api/complaints/my-complaints', {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
 
-      const data = await response.json();
-      
-      if (response.ok && data.success) {
-        setComplaints(data.data || []);
-        setError('');
-      } else {
-        setError(data.message || 'Failed to fetch complaints');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
+      setComplaints(data.complaints || []);
     } catch (error) {
       console.error('Error fetching complaints:', error);
-      setError('Failed to connect to server');
+      setError('Failed to load your complaints. Please try again.');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchComplaints();
-  }, [fetchComplaints]);
-
-  const getStatsFromComplaints = () => {
-    const totalReports = complaints.length;
-    const resolved = complaints.filter(c => c.status === 'Resolved').length;
-    const inProgress = complaints.filter(c => c.status === 'In Progress').length;
-    const pending = complaints.filter(c => c.status === 'Pending').length;
-    
-    return {
-      totalReports,
-      resolved,
-      inProgress,
-      pending,
-      completionRate: totalReports > 0 ? Math.round((resolved / totalReports) * 100) : 0
-    };
+  // Calculate stats from complaints
+  const stats = {
+    totalReports: complaints.length,
+    pending: complaints.filter(c => c.status === 'pending').length,
+    inProgress: complaints.filter(c => c.status === 'in-progress').length,
+    resolved: complaints.filter(c => c.status === 'resolved').length,
+    completionRate: complaints.length > 0 ? Math.round((complaints.filter(c => c.status === 'resolved').length / complaints.length) * 100) : 0
   };
 
-  const stats = getStatsFromComplaints();
+  useEffect(() => {
+    fetchComplaints();
+    const storedName = localStorage.getItem("username");
+    if (storedName) setUsername(storedName);
+  }, [fetchComplaints]);
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -103,7 +100,7 @@ export default function Dashboard() {
             {/* Left Section */}
             <div>
               <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
-                Welcome back!
+                Welcome back, {username}!
               </h1>
               <p className="flex items-center text-gray-600 text-sm mt-1">
                 <FiMapPin size={16} className="mr-1 text-purple-600" />
@@ -183,7 +180,7 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Stats Row - moved ABOVE reports */}
+          {/* Stats Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-lg shadow">
               <p className="text-purple-600 font-medium flex items-center gap-2">
@@ -227,36 +224,36 @@ export default function Dashboard() {
                 Loading complaints...
               </div>
             </div>
-          ) : complaints.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {complaints.map((complaint) => (
-                <ReportCard
-                  key={complaint._id}
-                  title={complaint.title}
-                  category={complaint.category}
-                  priority={complaint.priority}
-                  location={complaint.location}
-                  status={complaint.status}
-                  description={complaint.description}
-                  submitted={new Date(complaint.createdAt).toLocaleDateString()}
-                  assignedTo="System Admin"
-                />
-              ))}
-            </div>
           ) : (
-            <div className="text-center py-12">
-              <FiFileText size={48} className="mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-700 mb-2">No reports yet</h3>
-              <p className="text-gray-500 mb-4">Start by reporting your first civic issue</p>
-              <button
-                onClick={() => navigate("/reportissue")}
-                className="bg-purple-600 text-white px-6 py-2 rounded-md hover:bg-purple-700 transition"
-              >
-                Report Your First Issue
-              </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {complaints.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <FiFileText className="mx-auto text-gray-400 mb-4" size={48} />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No reports yet</h3>
+                  <p className="text-gray-500 mb-4">Get started by reporting your first civic issue.</p>
+                  <button
+                    onClick={() => navigate("/reportissue")}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition"
+                  >
+                    Report an Issue
+                  </button>
+                </div>
+              ) : (
+                complaints.map((complaint) => (
+                  <ReportCard
+                    key={complaint._id}
+                    title={complaint.title}
+                    location={complaint.location}
+                    status={complaint.status}
+                    priority={complaint.priority}
+                    date={new Date(complaint.createdAt).toLocaleDateString()}
+                    category={complaint.category}
+                    description={complaint.description}
+                  />
+                ))
+              )}
             </div>
           )}
-
         </div>
       </div>
     </div>

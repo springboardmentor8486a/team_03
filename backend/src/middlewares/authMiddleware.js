@@ -1,6 +1,6 @@
-// backend/src/middlewares/authMiddleware.js
-import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
+// src/middlewares/authMiddleware.js
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -13,18 +13,18 @@ export const generateToken = (userData) => {
 
 //  Verify JWT Token Middleware
 export const verifyToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Format: Bearer <token>
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1]; // Format: Bearer <token>
 
   if (!token) {
-    return res.status(401).json({ message: 'Access Denied. No token provided.' });
+    return res.status(401).json({ message: "Access Denied. No token provided." });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = decoded; // expects { id: userId }
     next();
   } catch (err) {
-    return res.status(403).json({ message: 'Invalid or expired token.' });
+    return res.status(403).json({ message: "Invalid or expired token." });
   }
 };
