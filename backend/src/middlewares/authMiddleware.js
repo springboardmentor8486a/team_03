@@ -1,6 +1,7 @@
-// backend/src/middleware/authMiddleware.js
+// backend/src/middlewares/authMiddleware.js
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 // Generate JWT Token

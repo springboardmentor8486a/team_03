@@ -4,13 +4,14 @@ import dotenv from "dotenv";
 import connectDB from "./src/config/db.js";
 import { userRoutes } from "./src/routes/userRoutes.js";
 import { complaintRoutes } from "./src/routes/complaintRoutes.js";
+
 dotenv.config();
 const app = express();
 
 // CORS middleware
 app.use(cors({
-    origin: "http://localhost:5173", // Vite default port
-    credentials: true
+    origin: ["http://localhost:3000", "http://localhost:5173"], // Add your frontend URLs
+    credentials: true,
 }));
 
 // Middleware
