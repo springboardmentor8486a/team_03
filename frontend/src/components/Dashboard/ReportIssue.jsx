@@ -39,7 +39,14 @@ export default function ReportIssue() {
   };
 
   const getAuthToken = () => {
-    const user = localStorage.getItem('user');
+    // Try to get token directly first (stored by login)
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (token) {
+      return token;
+    }
+    
+    // Fallback: try to get from user object (legacy)
+    const user = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (user) {
       try {
         const userData = JSON.parse(user);
@@ -89,6 +96,11 @@ export default function ReportIssue() {
     }
 
     const token = getAuthToken();
+    console.log('Auth token check:', {
+      hasToken: !!token,
+      tokenSource: localStorage.getItem('token') ? 'localStorage' : sessionStorage.getItem('token') ? 'sessionStorage' : 'none'
+    });
+    
     if (!token) {
       setError('Authentication required. Please log in again.');
       return;

@@ -13,7 +13,7 @@ function App() {
         <Route path="/login/*" element={<LoginForm />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} /> {/* ✅ add route */}
-        <Route path="/reportissue" element={<ReportIssue />} /> {/* ✅ add route */}
+        <Route path="/reportissue" element={<ReportIssue />} /> {/* ✅ add report issue route */}
       </Routes>
     </BrowserRouter>
   );
