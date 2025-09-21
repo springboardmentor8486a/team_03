@@ -3,6 +3,7 @@ import Home from "./pages/Home";
 import LoginForm from "./pages/LoginForm";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./components/Dashboard/Profile"; 
+import ReportIssue from "./components/Dashboard/ReportIssue";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/login/*" element={<LoginForm />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} /> {/* ✅ add route */}
+        <Route path="/reportissue" element={<ReportIssue />} /> {/* ✅ add route */}
       </Routes>
     </BrowserRouter>
   );
