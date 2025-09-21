@@ -1,21 +1,25 @@
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
+import dotenv from "dotenv";
 import connectDB from "./src/config/db.js";
 import { userRoutes } from "./src/routes/userRoutes.js";
+import { complaintRoutes } from "./src/routes/complaintRoutes.js";
 
 dotenv.config();
 const app = express();
 
-// Middleware
+// CORS middleware
 app.use(cors({
     origin: ["http://localhost:3000", "http://localhost:5173"], // Add your frontend URLs
     credentials: true,
 }));
+
+// Middleware
 app.use(express.json());
 
 // Routes
 app.use("/api/users", userRoutes);
+app.use("/api/complaints", complaintRoutes);
 
 // Error handler to return JSON instead of HTML
 // eslint-disable-next-line no-unused-vars

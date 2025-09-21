@@ -108,7 +108,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
   }
 
   if (process.env.NODE_ENV !== "production") {
-    console.log("[DEV] OTP for", email, ":", otp);
+
     return res.json({ message: "OTP sent to registered email", otp });
   }
 
@@ -135,7 +135,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
 
   // In dev, log stored OTP to help debugging
   if (process.env.NODE_ENV !== "production") {
-    console.log("[DEV] Stored OTP:", String(user.otp), "Provided OTP:", String(otp).trim());
+
   }
 
   if (user.otpExpiry < Date.now()) {

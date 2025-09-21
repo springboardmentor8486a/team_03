@@ -56,49 +56,49 @@ export default function Profile() {
   });
 
   useEffect(() => {
-    fetchUserProfile();
-  }, []);
+    const fetchUserProfile = async () => {
+      try {
+        const response = await api.get("/");
+        const userData = response.data;
 
-  const fetchUserProfile = async () => {
-    try {
-      const response = await api.get("/");
-      const userData = response.data;
+        setFormData({
+          name: userData.name || "",
+          email: userData.email || "",
+          phone: userData.phone || "",
+          city: userData.city || "",
+          address: userData.address || "",
+          bio: userData.bio || "",
+          notifications: {
+            emailUpdates: userData.notifications?.emailUpdates ?? true,
+            smsAlerts: userData.notifications?.smsAlerts ?? false,
+            pushNotifications: userData.notifications?.pushNotifications ?? true,
+            weeklyDigest: userData.notifications?.weeklyDigest ?? true,
+          },
+          privacy: {
+            visibility: userData.privacy?.visibility || "Public",
+            showLocation: userData.privacy?.showLocation ?? true,
+            showReports: userData.privacy?.showReports ?? true,
+            allowContact: userData.privacy?.allowContact ?? true,
+          },
+        });
 
-      setFormData({
-        name: userData.name || "",
-        email: userData.email || "",
-        phone: userData.phone || "",
-        city: userData.city || "",
-        address: userData.address || "",
-        bio: userData.bio || "",
-        notifications: {
-          emailUpdates: userData.notifications?.emailUpdates ?? true,
-          smsAlerts: userData.notifications?.smsAlerts ?? false,
-          pushNotifications: userData.notifications?.pushNotifications ?? true,
-          weeklyDigest: userData.notifications?.weeklyDigest ?? true,
-        },
-        privacy: {
-          visibility: userData.privacy?.visibility || "Public",
-          showLocation: userData.privacy?.showLocation ?? true,
-          showReports: userData.privacy?.showReports ?? true,
-          allowContact: userData.privacy?.allowContact ?? true,
-        },
-      });
-
-      localStorage.setItem("username", userData.name || "User");
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching profile:", err);
-      if (err.response?.status === 401) {
-        setError("Authentication failed. Please login again.");
-        localStorage.removeItem("token");
-        navigate("/login");
-      } else {
-        setError("Failed to load profile data. Please try again.");
+        localStorage.setItem("username", userData.name || "User");
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        if (err.response?.status === 401) {
+          setError("Authentication failed. Please login again.");
+          localStorage.removeItem("token");
+          navigate("/login");
+        } else {
+          setError("Failed to load profile data. Please try again.");
+        }
+        setLoading(false);
       }
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchUserProfile();
+  }, [api, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

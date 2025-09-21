@@ -1,8 +1,18 @@
 // src/middlewares/authMiddleware.js
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
-//  Verify JWT Token Middleware (ESM)
-const verifyToken = (req, res, next) => {
+dotenv.config();
+
+// Generate JWT Token
+export const generateToken = (userData) => {
+  return jwt.sign(userData, process.env.JWT_SECRET, {
+    expiresIn: '1h',
+  });
+};
+
+//  Verify JWT Token Middleware
+export const verifyToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1]; // Format: Bearer <token>
 
@@ -18,5 +28,3 @@ const verifyToken = (req, res, next) => {
     return res.status(403).json({ message: "Invalid or expired token." });
   }
 };
-
-export { verifyToken };
