@@ -25,7 +25,14 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const getAuthToken = () => {
-    const user = localStorage.getItem('user');
+    // Try to get token directly first (stored by login)
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (token) {
+      return token;
+    }
+    
+    // Fallback: try to get from user object (legacy)
+    const user = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (user) {
       try {
         const userData = JSON.parse(user);
@@ -50,7 +57,7 @@ export default function Dashboard() {
       setLoading(true);
       setError('');
       
-      const response = await fetch('http://localhost:5000/api/complaints/my-complaints', {
+      const response = await fetch('http://localhost:5000/api/complaints/my', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -63,7 +70,7 @@ export default function Dashboard() {
       }
 
       const data = await response.json();
-      setComplaints(data.complaints || []);
+      setComplaints(data.data || []);
     } catch (error) {
       console.error('Error fetching complaints:', error);
       setError('Failed to load your complaints. Please try again.');
@@ -75,10 +82,10 @@ export default function Dashboard() {
   // Calculate stats from complaints
   const stats = {
     totalReports: complaints.length,
-    pending: complaints.filter(c => c.status === 'pending').length,
-    inProgress: complaints.filter(c => c.status === 'in-progress').length,
-    resolved: complaints.filter(c => c.status === 'resolved').length,
-    completionRate: complaints.length > 0 ? Math.round((complaints.filter(c => c.status === 'resolved').length / complaints.length) * 100) : 0
+    pending: complaints.filter(c => c.status === 'Received' || c.status === 'In Review').length,
+    inProgress: complaints.filter(c => c.status === 'In Progress').length,
+    resolved: complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length,
+    completionRate: complaints.length > 0 ? Math.round((complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length / complaints.length) * 100) : 0
   };
 
   useEffect(() => {
@@ -246,7 +253,8 @@ export default function Dashboard() {
                     location={complaint.location}
                     status={complaint.status}
                     priority={complaint.priority}
-                    date={new Date(complaint.createdAt).toLocaleDateString()}
+                    submitted={new Date(complaint.submittedAt).toLocaleDateString()}
+                    assignedTo={complaint.assignedTo?.name || 'Unassigned'}
                     category={complaint.category}
                     description={complaint.description}
                   />

@@ -62,8 +62,10 @@ export default function ReportCard({
 
       {/* Footer */}
       <div className="mt-10 flex flex-col gap-1 text-xs text-gray-500 text-left">
-        <span>Submitted: {submitted}</span>
-        <span>Assigned to: {assignedTo}</span>
+        <span>Submitted: {submitted || 'N/A'}</span>
+        <span className={`${assignedTo === 'Unassigned' ? 'text-orange-600' : 'text-gray-500'}`}>
+          Assigned to: {assignedTo || 'Unassigned'}
+        </span>
       </div>
 
       {/* Action Buttons */}
