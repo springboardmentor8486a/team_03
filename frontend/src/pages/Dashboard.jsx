@@ -15,6 +15,7 @@ import Sidebar from "../components/Dashboard/DashSidebar";
 import Navbar from "../components/Dashboard/Navbar";
 import StatCard from "../components/Dashboard/StatCard";
 import ReportCard from "../components/Dashboard/ReportCard";
+import DashFooter from "../components/Dashboard/DashFooter";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("My Reports");
@@ -22,16 +23,13 @@ export default function Dashboard() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   const getAuthToken = () => {
-    // Try to get token directly first (stored by login)
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    if (token) {
-      return token;
-    }
-    
-    // Fallback: try to get from user object (legacy)
+    if (token) return token;
+
     const user = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (user) {
       try {
@@ -56,7 +54,6 @@ export default function Dashboard() {
     try {
       setLoading(true);
       setError('');
-      
       const response = await fetch('http://localhost:5000/api/complaints/my', {
         method: 'GET',
         headers: {
@@ -64,11 +61,7 @@ export default function Dashboard() {
           'Content-Type': 'application/json',
         },
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       setComplaints(data.data || []);
     } catch (error) {
@@ -79,13 +72,14 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Calculate stats from complaints
   const stats = {
     totalReports: complaints.length,
     pending: complaints.filter(c => c.status === 'Received' || c.status === 'In Review').length,
     inProgress: complaints.filter(c => c.status === 'In Progress').length,
     resolved: complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length,
-    completionRate: complaints.length > 0 ? Math.round((complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length / complaints.length) * 100) : 0
+    completionRate: complaints.length > 0
+      ? Math.round((complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length / complaints.length) * 100)
+      : 0
   };
 
   useEffect(() => {
@@ -95,18 +89,20 @@ export default function Dashboard() {
   }, [fetchComplaints]);
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar />
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
-      <div className="flex flex-col flex-1">
-        <Navbar />
+      <div className="flex flex-col flex-1 overflow-hidden">
+        {/* Navbar */}
+        <Navbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-        <div className="p-8 overflow-y-auto space-y-8">
-          {/* Welcome Message */}
-          <div className="flex items-center justify-between w-full mb-6">
-            {/* Left Section */}
+        {/* Main content */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-8">
+          {/* Welcome Section */}
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 md:gap-0">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 tracking-tight">
                 Welcome back, {username}!
               </h1>
               <p className="flex items-center text-gray-600 text-sm mt-1">
@@ -114,10 +110,8 @@ export default function Dashboard() {
                 Downtown • Civic Engagement Dashboard
               </p>
             </div>
-
-            {/* Right Section */}
-            <div className="flex gap-3">
-              <button 
+            <div className="flex flex-wrap gap-2">
+              <button
                 onClick={fetchComplaints}
                 disabled={loading}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100 transition disabled:opacity-50"
@@ -138,40 +132,16 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Top Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard
-              title="My Reports"
-              value={stats.totalReports.toString()}
-              subtitle={`${stats.pending} pending`}
-              color="from-purple-500 to-purple-600"
-              icon={<FiFileText size={24} />}
-            />
-            <StatCard
-              title="Resolved"
-              value={stats.resolved.toString()}
-              subtitle={`${stats.completionRate}% completion`}
-              color="from-green-500 to-green-600"
-              icon={<FiCheckCircle size={24} />}
-            />
-            <StatCard
-              title="In Progress"
-              value={stats.inProgress.toString()}
-              subtitle="Being addressed"
-              color="from-orange-500 to-orange-600"
-              icon={<FiClock size={24} />}
-            />
-            <StatCard
-              title="Community Score"
-              value="8.7"
-              subtitle="+0.3 this month"
-              color="from-pink-500 to-purple-500"
-              icon={<FiUsers size={24} />}
-            />
+          {/* Top Stat Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCard title="My Reports" value={stats.totalReports.toString()} subtitle={`${stats.pending} pending`} color="from-purple-500 to-purple-600" icon={<FiFileText size={24} />} />
+            <StatCard title="Resolved" value={stats.resolved.toString()} subtitle={`${stats.completionRate}% completion`} color="from-green-500 to-green-600" icon={<FiCheckCircle size={24} />} />
+            <StatCard title="In Progress" value={stats.inProgress.toString()} subtitle="Being addressed" color="from-orange-500 to-orange-600" icon={<FiClock size={24} />} />
+            <StatCard title="Community Score" value="8.7" subtitle="+0.3 this month" color="from-pink-500 to-purple-500" icon={<FiUsers size={24} />} />
           </div>
 
           {/* Tabs */}
-          <div className="border-b flex space-x-8">
+          <div className="flex flex-wrap border-b gap-4">
             {["My Reports", "Activity", "Community"].map((tab) => (
               <button
                 key={tab}
@@ -189,26 +159,23 @@ export default function Dashboard() {
 
           {/* Stats Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
               <p className="text-purple-600 font-medium flex items-center gap-2">
                 <FiTrendingUp /> Response Rate
               </p>
               <h2 className="text-2xl font-bold">{stats.completionRate}%</h2>
               <div className="w-full bg-gray-200 h-2 rounded mt-2">
-                <div
-                  className="h-2 rounded bg-purple-600"
-                  style={{ width: `${stats.completionRate}%` }}
-                ></div>
+                <div className="h-2 rounded bg-purple-600" style={{ width: `${stats.completionRate}%` }}></div>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
               <p className="text-green-600 font-medium flex items-center gap-2">
                 <FiCalendar /> This Month
               </p>
               <h2 className="text-2xl font-bold">{stats.totalReports}</h2>
               <p className="text-gray-500 text-sm">Your reports</p>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
               <p className="text-purple-600 font-medium flex items-center gap-2">
                 <FiUsers /> Active Status
               </p>
@@ -232,7 +199,7 @@ export default function Dashboard() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {complaints.length === 0 ? (
                 <div className="col-span-full text-center py-12">
                   <FiFileText className="mx-auto text-gray-400 mb-4" size={48} />
@@ -262,7 +229,10 @@ export default function Dashboard() {
               )}
             </div>
           )}
-        </div>
+
+          {/* Footer */}
+          <DashFooter />
+        </main>
       </div>
     </div>
   );
