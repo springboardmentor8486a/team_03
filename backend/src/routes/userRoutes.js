@@ -8,6 +8,7 @@ import {
   resetPassword,
   getUserProfile,
   updateUserProfile,
+  testEmail,
 } from "../controllers/userController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 
@@ -19,6 +20,7 @@ router.post("/login", loginUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/verify-otp", verifyOtp);
 router.post("/reset-password", resetPassword);
+router.post("/test-email", testEmail);
 
 // Protected routes
 router.get("/profile", verifyToken, getUserProfile);

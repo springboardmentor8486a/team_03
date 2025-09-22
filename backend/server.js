@@ -1,10 +1,11 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import connectDB from "./src/config/db.js";
 import { userRoutes } from "./src/routes/userRoutes.js";
 import { complaintRoutes } from "./src/routes/complaintRoutes.js";
-dotenv.config();
 const app = express();
 
 // CORS middleware
