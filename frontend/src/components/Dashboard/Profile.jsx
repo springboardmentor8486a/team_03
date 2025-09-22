@@ -59,7 +59,7 @@ export default function Profile() {
     const fetchUserProfile = async () => {
       try {
         const response = await api.get("/");
-        const userData = response.data;
+        const userData = response.data.data;
 
         setFormData({
           name: userData.name || "",
@@ -102,8 +102,12 @@ export default function Profile() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
+
 
   const handleCheckboxChange = (section, key) => {
     setFormData({
@@ -131,10 +135,12 @@ export default function Profile() {
         privacy: formData.privacy,
       };
 
+      // ✅ Correct PUT endpoint
       const response = await api.put("/", updateData);
       const updatedUser = response.data;
 
       setSuccess("Profile updated successfully!");
+
       if (updatedUser) {
         setFormData((prev) => ({
           ...prev,
@@ -154,7 +160,7 @@ export default function Profile() {
       if (err.response?.status === 401) {
         setError("Authentication failed. Please login again.");
         localStorage.removeItem("token");
-        navigate("/dashboard");
+        navigate("/login");
       } else {
         setError(
           err.response?.data?.message || "Failed to update profile. Please try again."
@@ -224,9 +230,8 @@ export default function Profile() {
         <button
           onClick={handleSubmit}
           disabled={saving}
-          className={`px-4 py-2 text-white rounded-md shadow transition ${
-            saving ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
-          }`}
+          className={`px-4 py-2 text-white rounded-md shadow transition ${saving ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
+            }`}
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>
@@ -252,11 +257,11 @@ export default function Profile() {
             <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative">
               {formData.name
                 ? formData.name
-                    .split(" ")
-                    .map((word) => word[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2)
+                  .split(" ")
+                  .map((word) => word[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)
                 : "U"}
               <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow cursor-pointer">
                 <FiCamera className="text-gray-600 w-4 h-4" />
@@ -327,11 +332,10 @@ export default function Profile() {
               <FiUser /> Personal Information
             </h3>
             <div className="grid grid-cols-2 gap-8 mt-4">
-              {[
-                { name: "name", label: "Full Name", type: "text" },
-                { name: "email", label: "Email Address", type: "email", disabled: true },
-                { name: "phone", label: "Phone Number", type: "text" },
-                { name: "city", label: "City", type: "text" },
+              {[{ name: "name", label: "Full Name", type: "text" },
+              { name: "email", label: "Email Address", type: "email", disabled: true },
+              { name: "phone", label: "Phone Number", type: "text" },
+              { name: "city", label: "City", type: "text" }
               ].map(({ name, label, type, disabled }) => (
                 <div key={name}>
                   <label className="block text-sm font-medium text-gray-600 text-left">{label}</label>
@@ -341,10 +345,10 @@ export default function Profile() {
                     value={formData[name]}
                     onChange={handleChange}
                     disabled={disabled}
-                    className={`w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-purple-500 ${
-                      disabled ? "bg-gray-200 cursor-not-allowed" : "bg-gray-100"
-                    }`}
+                    className={`w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-purple-500 ${disabled ? "bg-gray-200 cursor-not-allowed" : "bg-white"
+                      }`}
                   />
+
                 </div>
               ))}
 
@@ -378,32 +382,19 @@ export default function Profile() {
               <FiBell className="text-purple-600" /> Notification Preferences
             </h3>
             <div className="mt-4 space-y-6">
-              {[
-                {
-                  key: "emailUpdates",
-                  label: "Email Updates",
-                  description: "Receive important updates and announcements via email.",
-                },
-                {
-                  key: "smsAlerts",
-                  label: "SMS Alerts",
-                  description: "Get urgent alerts and notifications directly on your phone.",
-                },
-                {
-                  key: "pushNotifications",
-                  label: "Push Notifications",
-                  description: "Allow push notifications on your device for real-time updates.",
-                },
-                {
-                  key: "weeklyDigest",
-                  label: "Weekly Digest",
-                  description: "Get a weekly summary of activities and updates.",
-                },
-              ].map(({ key, label, description }) => (
+              {["emailUpdates", "smsAlerts", "pushNotifications", "weeklyDigest"].map((key) => (
                 <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50">
                   <div className="text-left space-y-2">
-                    <p className="font-medium">{label}</p>
-                    <p className="text-sm text-gray-500">{description}</p>
+                    <p className="font-medium">{key === "emailUpdates" ? "Email Updates" : key === "smsAlerts" ? "SMS Alerts" : key === "pushNotifications" ? "Push Notifications" : "Weekly Digest"}</p>
+                    <p className="text-sm text-gray-500">
+                      {key === "emailUpdates"
+                        ? "Receive important updates via email."
+                        : key === "smsAlerts"
+                          ? "Get urgent alerts directly on your phone."
+                          : key === "pushNotifications"
+                            ? "Allow push notifications on your device."
+                            : "Get a weekly summary of activities."}
+                    </p>
                   </div>
                   <input
                     type="checkbox"
@@ -446,15 +437,15 @@ export default function Profile() {
                       {key === "showLocation"
                         ? "Show Location"
                         : key === "showReports"
-                        ? "Show Reports"
-                        : "Allow Contact"}
+                          ? "Show Reports"
+                          : "Allow Contact"}
                     </p>
                     <p className="text-sm text-gray-500">
                       {key === "showLocation"
                         ? "Display your general location to other users"
                         : key === "showReports"
-                        ? "Allow others to see your public reports"
-                        : "Let community members contact you directly"}
+                          ? "Allow others to see your public reports"
+                          : "Let community members contact you directly"}
                     </p>
                   </div>
                   <input
@@ -476,20 +467,26 @@ export default function Profile() {
               <div className="flex items-center justify-between p-4 border rounded-md bg-red-50">
                 <div className="space-y-2">
                   <p className="font-medium text-red-700">Delete Account</p>
-                  <p className="text-sm text-red-500">Permanently delete your account and all associated data</p>
+                  <p className="text-sm text-red-500">Permanently delete your account and all associated data.</p>
                 </div>
-                <button onClick={handleDeleteAccount} className="bg-red-600 text-white px-3 py-1 rounded">
-                  Delete Account
+                <button
+                  onClick={handleDeleteAccount}
+                  className="px-4 py-2 text-white bg-red-600 rounded hover:bg-red-700"
+                >
+                  Delete
                 </button>
               </div>
 
-              <div className="flex items-center justify-between p-4 border rounded-md bg-yellow-50">
-                <div>
-                  <p className="font-medium text-yellow-700">Export Data</p>
-                  <p className="text-sm text-yellow-600">Download a copy of all your data</p>
+              <div className="flex items-center justify-between p-4 border rounded-md bg-gray-50">
+                <div className="space-y-2">
+                  <p className="font-medium">Export Data</p>
+                  <p className="text-sm text-gray-500">Download all your data in JSON format.</p>
                 </div>
-                <button onClick={handleExportData} className="bg-yellow-500 text-white px-3 py-1 rounded">
-                  Export Data
+                <button
+                  onClick={handleExportData}
+                  className="px-4 py-2 text-white bg-purple-600 rounded hover:bg-purple-700"
+                >
+                  Export
                 </button>
               </div>
             </div>
