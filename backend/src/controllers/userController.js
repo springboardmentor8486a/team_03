@@ -3,7 +3,7 @@ import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import transporter from "../utils/mailer.js"; // ✅ centralized transporter
+import createTransporter from "../utils/mailer.js"; // ✅ centralized transporter
 
 /* ---------------- REGISTER ---------------- */
 // @desc    Register new user
@@ -30,11 +30,12 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (user) {
     try {
+      const transporter = createTransporter();
       await transporter.sendMail({
         from: `"Clean Street" <${process.env.EMAIL_USER}>`,
         to: user.email,
         subject: "Welcome to Clean Street!",
-        text: `Hi ${user.name},\n\nThank you for registering with Clean Street. We’re excited to have you on board!`,
+        text: `Hi ${user.name},\n\nThank you for registering with Clean Street. We're excited to have you on board!`,
       });
     } catch (error) {
       console.error("Error sending welcome email:", error.message);
@@ -97,14 +98,36 @@ const forgotPassword = asyncHandler(async (req, res) => {
   await user.save();
 
   try {
-    await transporter.sendMail({
+    console.log(`📧 Attempting to send OTP email to: ${user.email}`);
+    console.log(`📧 From: ${process.env.EMAIL_USER}`);
+    
+    const transporter = createTransporter();
+    const result = await transporter.sendMail({
       from: `"Clean Street" <${process.env.EMAIL_USER}>`,
       to: user.email,
       subject: "Password Reset OTP",
       text: `Your OTP is ${otp}. It is valid for 10 minutes.`,
+      html: `
+        <h2>Password Reset OTP</h2>
+        <p>Your OTP is: <strong>${otp}</strong></p>
+        <p>This OTP is valid for 10 minutes.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+      `
     });
+    
+    console.log(`✅ OTP email sent successfully to ${user.email}`);
+    console.log(`📧 Message ID: ${result.messageId}`);
   } catch (error) {
-    console.error("Error sending OTP:", error.message);
+    console.error("❌ Error sending OTP email:", error);
+    
+    console.error("📧 Email configuration check:");
+    console.error("- EMAIL_USER:", process.env.EMAIL_USER ? "✅ Set" : "❌ NOT SET");
+    console.error("- EMAIL_PASS:", process.env.EMAIL_PASS ? "✅ Set" : "❌ NOT SET");
+    console.error("📧 Error details:", {
+      code: error.code,
+      command: error.command,
+      response: error.response
+    });
   }
 
   if (process.env.NODE_ENV !== "production") {
@@ -186,69 +209,161 @@ const resetPassword = asyncHandler(async (req, res) => {
   res.json({ message: "Password reset successful. You can log in now." });
 });
 
-/* ---------------- GET PROFILE ---------------- */
-// @desc    Get current user's profile
+/* ---------------- GET USER PROFILE ---------------- */
+// @desc    Get user profile
 // @route   GET /api/users/profile
 // @access  Private
-const getProfile = asyncHandler(async (req, res) => {
-  const userId = req.user?.id;
-  if (!userId) {
-    res.status(401);
-    throw new Error("Unauthorized");
-  }
+const getUserProfile = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select(
+      '-password -otp -otpExpiry -isOtpVerified'
+    );
 
-  const user = await User.findById(userId).select("-password -otp -otpExpiry -isOtpVerified");
-  if (!user) {
-    res.status(404);
-    throw new Error("User not found");
-  }
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
 
-  res.json(user);
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    res.status(500);
+    throw new Error("Failed to fetch user profile");
+  }
 });
 
-/* ---------------- UPDATE PROFILE ---------------- */
-// @desc    Update current user's profile
+/* ---------------- UPDATE USER PROFILE ---------------- */
+// @desc    Update user profile
 // @route   PUT /api/users/profile
 // @access  Private
-const updateProfile = asyncHandler(async (req, res) => {
-  const userId = req.user?.id;
-  if (!userId) {
-    res.status(401);
-    throw new Error("Unauthorized");
-  }
+const updateUserProfile = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
 
-  const { name, email, phone, location } = req.body;
-
-  const user = await User.findById(userId);
-  if (!user) {
-    res.status(404);
-    throw new Error("User not found");
-  }
-
-  // If email is changing, ensure uniqueness
-  if (email && email !== user.email) {
-    const emailTaken = await User.findOne({ email });
-    if (emailTaken) {
-      res.status(400);
-      throw new Error("Email already in use");
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
     }
-    user.email = email;
+
+    // Fields that can be updated
+    const allowedFields = [
+      'name', 'phone', 'city', 'address', 'bio', 
+      'notifications', 'privacy'
+    ];
+
+    // Update only allowed fields
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        if (field === 'notifications' || field === 'privacy') {
+          // Handle nested objects
+          user[field] = { ...user[field].toObject(), ...req.body[field] };
+        } else {
+          user[field] = req.body[field];
+        }
+      }
+    });
+
+    const updatedUser = await user.save();
+
+    // Remove sensitive fields from response
+    const userResponse = updatedUser.toObject();
+    delete userResponse.password;
+    delete userResponse.otp;
+    delete userResponse.otpExpiry;
+    delete userResponse.isOtpVerified;
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: userResponse
+    });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    res.status(500);
+    throw new Error("Failed to update user profile");
+  }
+});
+
+/* ---------------- TEST EMAIL ---------------- */
+// @desc    Test email configuration
+// @route   POST /api/users/test-email
+// @access  Public
+const testEmail = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    res.status(400);
+    throw new Error("Email is required");
   }
 
-  if (name) user.name = name;
-  if (phone) user.phone = phone;
-  if (location !== undefined) user.location = location;
+  console.log("🧪 Testing email configuration...");
+  console.log("EMAIL_USER:", process.env.EMAIL_USER ? "✅ Set" : "❌ NOT SET");
+  console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "✅ Set" : "❌ NOT SET");
+  console.log("EMAIL_PASS length:", process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0);
+  console.log("EMAIL_PASS format:", process.env.EMAIL_PASS ? (process.env.EMAIL_PASS.includes(' ') ? "❌ Contains spaces" : "✅ No spaces") : "❌ Not set");
 
-  await user.save();
+  try {
+    // Test transporter connection first
+    console.log("🔍 Verifying transporter connection...");
+    const transporter = createTransporter();
+    await transporter.verify();
+    console.log("✅ Transporter verification successful");
 
-  res.json({
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-    location: user.location,
-    role: user.role,
-  });
+    // Send test email
+    console.log("📧 Sending test email...");
+    const result = await transporter.sendMail({
+      from: `"Clean Street Test" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Test Email from Clean Street",
+      text: "This is a test email to verify email configuration is working correctly.",
+      html: `
+        <h2>Test Email</h2>
+        <p>This is a test email to verify email configuration is working correctly.</p>
+        <p>If you receive this email, your email setup is working! 🎉</p>
+        <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+      `
+    });
+
+    console.log("✅ Test email sent successfully:", result.messageId);
+    res.json({ 
+      success: true, 
+      message: "Test email sent successfully",
+      messageId: result.messageId,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error("❌ Test email failed:", error);
+    console.error("📧 Full error details:", {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode,
+      stack: error.stack
+    });
+    
+    res.status(500).json({
+      success: false,
+      message: "Test email failed",
+      error: error.message,
+      details: {
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode
+      },
+      troubleshooting: {
+        checkAppPassword: "Make sure you're using a 16-character App Password from Google Account settings",
+        check2FA: "Ensure 2-factor authentication is enabled on your Gmail account",
+        checkSpaces: "Remove any spaces from your App Password",
+        generateNewPassword: "Try generating a new App Password at https://myaccount.google.com/apppasswords"
+      }
+    });
+  }
 });
 
 /* ---------------- JWT GENERATOR ---------------- */
@@ -264,6 +379,7 @@ export {
   forgotPassword,
   verifyOtp,
   resetPassword,
-  getProfile,
-  updateProfile,
+  getUserProfile,
+  updateUserProfile,
+  testEmail,
 };

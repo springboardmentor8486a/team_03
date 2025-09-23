@@ -45,7 +45,7 @@ export default function Profile() {
     },
   });
 
-  // ✅ Fetch user profile dynamically with current token
+  // Fetch user profile dynamically with current token
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -59,7 +59,8 @@ export default function Profile() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const userData = response.data;
+        // Support backend that returns user directly or wrapped in data object
+        const userData = response.data?.data ?? response.data;
 
         setFormData({
           name: userData.name || "",
@@ -102,20 +103,23 @@ export default function Profile() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleCheckboxChange = (section, key) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [section]: {
-        ...formData[section],
-        [key]: !formData[section][key],
+        ...prev[section],
+        [key]: !prev[section][key],
       },
-    });
+    }));
   };
 
-  // ✅ Save updated profile
+  // Save updated profile
   const handleSubmit = async () => {
     setSaving(true);
     setError("");
@@ -142,7 +146,9 @@ export default function Profile() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const updatedUser = response.data;
+      // backend might respond with user or { data: user }
+      const updatedUser = response.data?.data ?? response.data;
+
       setSuccess("Profile updated successfully!");
 
       if (updatedUser) {
@@ -173,7 +179,7 @@ export default function Profile() {
     }
   };
 
-  // ✅ Delete account
+  // DELETE ACCOUNT
   const handleDeleteAccount = async () => {
     if (!window.confirm("Are you sure you want to permanently delete your account?")) return;
 
@@ -197,7 +203,7 @@ export default function Profile() {
     }
   };
 
-  // ✅ Export user data
+  // EXPORT DATA
   const handleExportData = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -272,9 +278,9 @@ export default function Profile() {
       )}
 
       {/* Main Layout */}
-      <div className="max-w-6xl mx-auto flex gap-6">
+      <div className="max-w-6xl mx-auto flex gap-6 flex-col lg:flex-row">
         {/* Sidebar */}
-        <div className="w-1/4 bg-white shadow rounded-2xl p-6 self-start">
+        <div className="w-full lg:w-1/4 bg-white shadow rounded-2xl p-6 self-start">
           <div className="flex flex-col items-center relative">
             <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative">
               {formData.name
@@ -353,7 +359,7 @@ export default function Profile() {
             <h3 className="flex items-center gap-2 font-semibold text-gray-800 text-lg">
               <FiUser /> Personal Information
             </h3>
-            <div className="grid grid-cols-2 gap-8 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
               {[
                 { name: "name", label: "Full Name", type: "text" },
                 { name: "email", label: "Email Address", type: "email", disabled: true },
@@ -375,7 +381,7 @@ export default function Profile() {
                 </div>
               ))}
 
-              <div className="col-span-2">
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-600 text-left">Address</label>
                 <input
                   type="text"
@@ -386,7 +392,7 @@ export default function Profile() {
                 />
               </div>
 
-              <div className="col-span-2">
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-600 text-left">Bio</label>
                 <textarea
                   name="bio"
@@ -456,7 +462,7 @@ export default function Profile() {
                 <select
                   value={formData.privacy.visibility}
                   onChange={(e) =>
-                    setFormData({ ...formData, privacy: { ...formData.privacy, visibility: e.target.value } })
+                    setFormData((prev) => ({ ...prev, privacy: { ...prev.privacy, visibility: e.target.value } }))
                   }
                   className="border rounded p-2 text-sm bg-gray-100 focus:ring-2 focus:ring-purple-500"
                 >
@@ -466,31 +472,33 @@ export default function Profile() {
                 </select>
               </div>
 
-              {["showLocation", "showReports", "allowContact"].map((key) => (
-                <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50 text-left">
-                  <div className="space-y-2">
-                    <p className="font-medium">
-                      {key === "showLocation"
-                        ? "Show Location"
-                        : key === "showReports"
-                        ? "Show Reports"
-                        : "Allow Contact"}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {key === "showLocation"
-                        ? "Display your general location to other users"
-                        : key === "showReports"
-                        ? "Allow others to see your public reports"
-                        : "Let community members contact you directly"}
-                    </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {["showLocation", "showReports", "allowContact"].map((key) => (
+                  <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50 text-left">
+                    <div className="space-y-2">
+                      <p className="font-medium">
+                        {key === "showLocation"
+                          ? "Show Location"
+                          : key === "showReports"
+                          ? "Show Reports"
+                          : "Allow Contact"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {key === "showLocation"
+                          ? "Display your general location to other users"
+                          : key === "showReports"
+                          ? "Allow others to see your public reports"
+                          : "Let community members contact you directly"}
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={formData.privacy[key]}
+                      onChange={() => handleCheckboxChange("privacy", key)}
+                    />
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={formData.privacy[key]}
-                    onChange={() => handleCheckboxChange("privacy", key)}
-                  />
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
@@ -503,26 +511,32 @@ export default function Profile() {
               <div className="flex items-center justify-between p-4 border rounded-md bg-red-50">
                 <div className="space-y-2">
                   <p className="font-medium text-red-700">Delete Account</p>
-                  <p className="text-sm text-red-500">Permanently delete your account and all associated data</p>
+                  <p className="text-sm text-red-500">Permanently delete your account and all associated data.</p>
                 </div>
-                <button onClick={handleDeleteAccount} className="bg-red-600 text-white px-3 py-1 rounded">
-                  Delete Account
+                <button
+                  onClick={handleDeleteAccount}
+                  className="px-4 py-2 text-white bg-red-600 rounded hover:bg-red-700"
+                >
+                  Delete
                 </button>
               </div>
 
-              <div className="flex items-center justify-between p-4 border rounded-md bg-yellow-50">
-                <div>
-                  <p className="font-medium text-yellow-700">Export Data</p>
-                  <p className="text-sm text-yellow-600">Download a copy of all your data</p>
+              <div className="flex items-center justify-between p-4 border rounded-md bg-gray-50">
+                <div className="space-y-2">
+                  <p className="font-medium">Export Data</p>
+                  <p className="text-sm text-gray-500">Download all your data in JSON format.</p>
                 </div>
-                <button onClick={handleExportData} className="bg-yellow-500 text-white px-3 py-1 rounded">
-                  Export Data
+                <button
+                  onClick={handleExportData}
+                  className="px-4 py-2 text-white bg-purple-600 rounded hover:bg-purple-700"
+                >
+                  Export
                 </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </div> {/* end main layout */}
     </div>
   );
 }

@@ -6,8 +6,9 @@ import {
   forgotPassword,
   verifyOtp,
   resetPassword,
-  getProfile,
-  updateProfile,
+  getUserProfile,
+  updateUserProfile,
+  testEmail,
 } from "../controllers/userController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 
@@ -19,9 +20,10 @@ router.post("/login", loginUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/verify-otp", verifyOtp);
 router.post("/reset-password", resetPassword);
+router.post("/test-email", testEmail);
 
-// Profile routes
-router.get("/profile", verifyToken, getProfile);
-router.put("/profile", verifyToken, updateProfile);
+// Protected routes
+router.get("/profile", verifyToken, getUserProfile);
+router.put("/profile", verifyToken, updateUserProfile);
 
 export { router as userRoutes };
