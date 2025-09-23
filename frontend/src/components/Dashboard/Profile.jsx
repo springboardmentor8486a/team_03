@@ -45,21 +45,22 @@ export default function Profile() {
     },
   });
 
-  const getAuthToken = () => localStorage.getItem("token");
-
-  // Axios instance
-  const api = axios.create({
-    baseURL: "http://localhost:5000/api/users/profile",
-    headers: {
-      Authorization: `Bearer ${getAuthToken()}`,
-    },
-  });
-
+  // Fetch user profile dynamically with current token
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await api.get("/");
-        const userData = response.data.data;
+        const token = localStorage.getItem("token");
+        if (!token) {
+          navigate("/login");
+          return;
+        }
+
+        const response = await axios.get("http://localhost:5000/api/users/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // Support backend that returns user directly or wrapped in data object
+        const userData = response.data?.data ?? response.data;
 
         setFormData({
           name: userData.name || "",
@@ -98,33 +99,39 @@ export default function Profile() {
     };
 
     fetchUserProfile();
-  }, [api, navigate]);
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-
   const handleCheckboxChange = (section, key) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [section]: {
-        ...formData[section],
-        [key]: !formData[section][key],
+        ...prev[section],
+        [key]: !prev[section][key],
       },
-    });
+    }));
   };
 
+  // Save updated profile
   const handleSubmit = async () => {
     setSaving(true);
     setError("");
     setSuccess("");
 
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
       const updateData = {
         name: formData.name,
         phone: formData.phone,
@@ -135,9 +142,12 @@ export default function Profile() {
         privacy: formData.privacy,
       };
 
-      // ✅ Correct PUT endpoint
-      const response = await api.put("/", updateData);
-      const updatedUser = response.data;
+      const response = await axios.put("http://localhost:5000/api/users/profile", updateData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // backend might respond with user or { data: user }
+      const updatedUser = response.data?.data ?? response.data;
 
       setSuccess("Profile updated successfully!");
 
@@ -162,9 +172,7 @@ export default function Profile() {
         localStorage.removeItem("token");
         navigate("/login");
       } else {
-        setError(
-          err.response?.data?.message || "Failed to update profile. Please try again."
-        );
+        setError(err.response?.data?.message || "Failed to update profile. Please try again.");
       }
     } finally {
       setSaving(false);
@@ -176,7 +184,16 @@ export default function Profile() {
     if (!window.confirm("Are you sure you want to permanently delete your account?")) return;
 
     try {
-      await api.delete("/");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      await axios.delete("http://localhost:5000/api/users/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       localStorage.removeItem("token");
       alert("Account deleted successfully!");
       navigate("/login");
@@ -189,7 +206,17 @@ export default function Profile() {
   // EXPORT DATA
   const handleExportData = async () => {
     try {
-      const response = await api.get("/export", { responseType: "blob" });
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await axios.get("http://localhost:5000/api/users/profile/export", {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -230,8 +257,9 @@ export default function Profile() {
         <button
           onClick={handleSubmit}
           disabled={saving}
-          className={`px-4 py-2 text-white rounded-md shadow transition ${saving ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
-            }`}
+          className={`px-4 py-2 text-white rounded-md shadow transition ${
+            saving ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
+          }`}
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>
@@ -250,18 +278,18 @@ export default function Profile() {
       )}
 
       {/* Main Layout */}
-      <div className="max-w-6xl mx-auto flex gap-6">
+      <div className="max-w-6xl mx-auto flex gap-6 flex-col lg:flex-row">
         {/* Sidebar */}
-        <div className="w-1/4 bg-white shadow rounded-2xl p-6 self-start">
+        <div className="w-full lg:w-1/4 bg-white shadow rounded-2xl p-6 self-start">
           <div className="flex flex-col items-center relative">
             <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative">
               {formData.name
                 ? formData.name
-                  .split(" ")
-                  .map((word) => word[0])
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2)
+                    .split(" ")
+                    .map((word) => word[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2)
                 : "U"}
               <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow cursor-pointer">
                 <FiCamera className="text-gray-600 w-4 h-4" />
@@ -331,11 +359,12 @@ export default function Profile() {
             <h3 className="flex items-center gap-2 font-semibold text-gray-800 text-lg">
               <FiUser /> Personal Information
             </h3>
-            <div className="grid grid-cols-2 gap-8 mt-4">
-              {[{ name: "name", label: "Full Name", type: "text" },
-              { name: "email", label: "Email Address", type: "email", disabled: true },
-              { name: "phone", label: "Phone Number", type: "text" },
-              { name: "city", label: "City", type: "text" }
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+              {[
+                { name: "name", label: "Full Name", type: "text" },
+                { name: "email", label: "Email Address", type: "email", disabled: true },
+                { name: "phone", label: "Phone Number", type: "text" },
+                { name: "city", label: "City", type: "text" },
               ].map(({ name, label, type, disabled }) => (
                 <div key={name}>
                   <label className="block text-sm font-medium text-gray-600 text-left">{label}</label>
@@ -345,14 +374,14 @@ export default function Profile() {
                     value={formData[name]}
                     onChange={handleChange}
                     disabled={disabled}
-                    className={`w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-purple-500 ${disabled ? "bg-gray-200 cursor-not-allowed" : "bg-white"
-                      }`}
+                    className={`w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-purple-500 ${
+                      disabled ? "bg-gray-200 cursor-not-allowed" : "bg-gray-100"
+                    }`}
                   />
-
                 </div>
               ))}
 
-              <div className="col-span-2">
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-600 text-left">Address</label>
                 <input
                   type="text"
@@ -363,7 +392,7 @@ export default function Profile() {
                 />
               </div>
 
-              <div className="col-span-2">
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-600 text-left">Bio</label>
                 <textarea
                   name="bio"
@@ -382,19 +411,32 @@ export default function Profile() {
               <FiBell className="text-purple-600" /> Notification Preferences
             </h3>
             <div className="mt-4 space-y-6">
-              {["emailUpdates", "smsAlerts", "pushNotifications", "weeklyDigest"].map((key) => (
+              {[
+                {
+                  key: "emailUpdates",
+                  label: "Email Updates",
+                  description: "Receive important updates and announcements via email.",
+                },
+                {
+                  key: "smsAlerts",
+                  label: "SMS Alerts",
+                  description: "Get urgent alerts and notifications directly on your phone.",
+                },
+                {
+                  key: "pushNotifications",
+                  label: "Push Notifications",
+                  description: "Allow push notifications on your device for real-time updates.",
+                },
+                {
+                  key: "weeklyDigest",
+                  label: "Weekly Digest",
+                  description: "Get a weekly summary of activities and updates.",
+                },
+              ].map(({ key, label, description }) => (
                 <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50">
                   <div className="text-left space-y-2">
-                    <p className="font-medium">{key === "emailUpdates" ? "Email Updates" : key === "smsAlerts" ? "SMS Alerts" : key === "pushNotifications" ? "Push Notifications" : "Weekly Digest"}</p>
-                    <p className="text-sm text-gray-500">
-                      {key === "emailUpdates"
-                        ? "Receive important updates via email."
-                        : key === "smsAlerts"
-                          ? "Get urgent alerts directly on your phone."
-                          : key === "pushNotifications"
-                            ? "Allow push notifications on your device."
-                            : "Get a weekly summary of activities."}
-                    </p>
+                    <p className="font-medium">{label}</p>
+                    <p className="text-sm text-gray-500">{description}</p>
                   </div>
                   <input
                     type="checkbox"
@@ -420,7 +462,7 @@ export default function Profile() {
                 <select
                   value={formData.privacy.visibility}
                   onChange={(e) =>
-                    setFormData({ ...formData, privacy: { ...formData.privacy, visibility: e.target.value } })
+                    setFormData((prev) => ({ ...prev, privacy: { ...prev.privacy, visibility: e.target.value } }))
                   }
                   className="border rounded p-2 text-sm bg-gray-100 focus:ring-2 focus:ring-purple-500"
                 >
@@ -430,31 +472,33 @@ export default function Profile() {
                 </select>
               </div>
 
-              {["showLocation", "showReports", "allowContact"].map((key) => (
-                <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50 text-left">
-                  <div className="space-y-2">
-                    <p className="font-medium">
-                      {key === "showLocation"
-                        ? "Show Location"
-                        : key === "showReports"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {["showLocation", "showReports", "allowContact"].map((key) => (
+                  <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50 text-left">
+                    <div className="space-y-2">
+                      <p className="font-medium">
+                        {key === "showLocation"
+                          ? "Show Location"
+                          : key === "showReports"
                           ? "Show Reports"
                           : "Allow Contact"}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {key === "showLocation"
-                        ? "Display your general location to other users"
-                        : key === "showReports"
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {key === "showLocation"
+                          ? "Display your general location to other users"
+                          : key === "showReports"
                           ? "Allow others to see your public reports"
                           : "Let community members contact you directly"}
-                    </p>
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={formData.privacy[key]}
+                      onChange={() => handleCheckboxChange("privacy", key)}
+                    />
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={formData.privacy[key]}
-                    onChange={() => handleCheckboxChange("privacy", key)}
-                  />
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
@@ -492,7 +536,7 @@ export default function Profile() {
             </div>
           </div>
         </div>
-      </div>
+      </div> {/* end main layout */}
     </div>
   );
 }
