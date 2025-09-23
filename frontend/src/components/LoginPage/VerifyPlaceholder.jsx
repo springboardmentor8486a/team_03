@@ -69,7 +69,7 @@ export default function VerifyPlaceholder() {
 
       if (response.data.success) {
         setMessage("Code verified! You can now reset your password.");
-        navigate("/login/reset");
+        navigate("/LoginPage/ResetPassword");
       } else {
         setError(response.data.message || "Invalid code. Please try again.");
       }

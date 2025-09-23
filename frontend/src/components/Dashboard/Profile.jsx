@@ -45,20 +45,20 @@ export default function Profile() {
     },
   });
 
-  const getAuthToken = () => localStorage.getItem("token");
-
-  // Axios instance
-  const api = axios.create({
-    baseURL: "http://localhost:5000/api/users/profile",
-    headers: {
-      Authorization: `Bearer ${getAuthToken()}`,
-    },
-  });
-
+  // ✅ Fetch user profile dynamically with current token
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await api.get("/");
+        const token = localStorage.getItem("token");
+        if (!token) {
+          navigate("/login");
+          return;
+        }
+
+        const response = await axios.get("http://localhost:5000/api/users/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
         const userData = response.data;
 
         setFormData({
@@ -98,7 +98,7 @@ export default function Profile() {
     };
 
     fetchUserProfile();
-  }, [api, navigate]);
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -115,12 +115,19 @@ export default function Profile() {
     });
   };
 
+  // ✅ Save updated profile
   const handleSubmit = async () => {
     setSaving(true);
     setError("");
     setSuccess("");
 
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
       const updateData = {
         name: formData.name,
         phone: formData.phone,
@@ -131,10 +138,13 @@ export default function Profile() {
         privacy: formData.privacy,
       };
 
-      const response = await api.put("/", updateData);
-      const updatedUser = response.data;
+      const response = await axios.put("http://localhost:5000/api/users/profile", updateData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
+      const updatedUser = response.data;
       setSuccess("Profile updated successfully!");
+
       if (updatedUser) {
         setFormData((prev) => ({
           ...prev,
@@ -154,23 +164,30 @@ export default function Profile() {
       if (err.response?.status === 401) {
         setError("Authentication failed. Please login again.");
         localStorage.removeItem("token");
-        navigate("/dashboard");
+        navigate("/login");
       } else {
-        setError(
-          err.response?.data?.message || "Failed to update profile. Please try again."
-        );
+        setError(err.response?.data?.message || "Failed to update profile. Please try again.");
       }
     } finally {
       setSaving(false);
     }
   };
 
-  // DELETE ACCOUNT
+  // ✅ Delete account
   const handleDeleteAccount = async () => {
     if (!window.confirm("Are you sure you want to permanently delete your account?")) return;
 
     try {
-      await api.delete("/");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      await axios.delete("http://localhost:5000/api/users/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       localStorage.removeItem("token");
       alert("Account deleted successfully!");
       navigate("/login");
@@ -180,10 +197,20 @@ export default function Profile() {
     }
   };
 
-  // EXPORT DATA
+  // ✅ Export user data
   const handleExportData = async () => {
     try {
-      const response = await api.get("/export", { responseType: "blob" });
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await axios.get("http://localhost:5000/api/users/profile/export", {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
