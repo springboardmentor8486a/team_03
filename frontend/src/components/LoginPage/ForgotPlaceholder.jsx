@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/urbanalive.jpg";
 
@@ -11,7 +12,7 @@ export default function ForgotPlaceholder() {
 
   const validateEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).toLowerCase());
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setMessage("");
@@ -19,12 +20,19 @@ export default function ForgotPlaceholder() {
     if (!validateEmail(email)) return setError("Please enter a valid email address.");
 
     setLoading(true);
-    setTimeout(() => {
+    try {
+      // Replace with your actual backend endpoint
+      const response = await axios.post("http://localhost:5000/api/users/forgot-password", { email });
       setLoading(false);
-      setMessage(`A verification code was sent to ${email}.`);
+      setMessage(response.data?.message || `A verification code was sent to ${email}.`);
       sessionStorage.setItem("forgot_email", email);
       navigate("/login/verify");
-    }, 900);
+    } catch (err) {
+      setLoading(false);
+      setError(
+        err.response?.data?.message || "Failed to send verification code. Please try again."
+      );
+    }
   };
 
   return (

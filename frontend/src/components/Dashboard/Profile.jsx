@@ -49,7 +49,7 @@ export default function Profile() {
 
   // Axios instance
   const api = axios.create({
-    baseURL: "http://localhost:5000/api/users/profile",
+    baseURL: "http://localhost:5000/api/users",
     headers: {
       Authorization: `Bearer ${getAuthToken()}`,
     },
@@ -58,8 +58,8 @@ export default function Profile() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await api.get("/");
-        const userData = response.data;
+        const response = await api.get("/profile");
+        const userData = response.data.data || {};
 
         setFormData({
           name: userData.name || "",
@@ -131,20 +131,20 @@ export default function Profile() {
         privacy: formData.privacy,
       };
 
-      const response = await api.put("/", updateData);
-      const updatedUser = response.data;
+      const response = await api.put("/profile", updateData);
+      const updated = response.data?.data;
 
       setSuccess("Profile updated successfully!");
-      if (updatedUser) {
+      if (updated) {
         setFormData((prev) => ({
           ...prev,
-          name: updatedUser.name || prev.name,
-          phone: updatedUser.phone || prev.phone,
-          city: updatedUser.city || prev.city,
-          address: updatedUser.address || prev.address,
-          bio: updatedUser.bio || prev.bio,
-          notifications: updatedUser.notifications || prev.notifications,
-          privacy: updatedUser.privacy || prev.privacy,
+          name: updated.name ?? prev.name,
+          phone: updated.phone ?? prev.phone,
+          city: updated.city ?? prev.city,
+          address: updated.address ?? prev.address,
+          bio: updated.bio ?? prev.bio,
+          notifications: updated.notifications ?? prev.notifications,
+          privacy: updated.privacy ?? prev.privacy,
         }));
       }
 

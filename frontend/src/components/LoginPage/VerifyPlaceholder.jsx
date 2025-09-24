@@ -62,9 +62,9 @@ export default function VerifyPlaceholder() {
 
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:5000/api/users/verify-code", {
+      const response = await axios.post("http://localhost:5000/api/users/verify-otp", {
         email,
-        code,
+        otp: code,
       });
 
       if (response.data.success) {
