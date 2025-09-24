@@ -17,7 +17,7 @@ export default function SignupPlaceholder() {
 
   const validateEmail = (v) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).toLowerCase());
-  const validatePhone = (p) => /^[0-9\-\+\s]{7,15}$/.test(p);
+  const validatePhone = (p) => /^[0-9\-+\s]{7,15}$/.test(p);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

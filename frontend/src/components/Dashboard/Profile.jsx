@@ -462,7 +462,7 @@ export default function Profile() {
                 <select
                   value={formData.privacy.visibility}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, privacy: { ...prev.privacy, visibility: e.target.value } }))
+                    setFormData({ ...formData, privacy: { ...formData.privacy, visibility: e.target.value } })
                   }
                   className="border rounded p-2 text-sm bg-gray-100 focus:ring-2 focus:ring-purple-500"
                 >
@@ -472,33 +472,31 @@ export default function Profile() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {["showLocation", "showReports", "allowContact"].map((key) => (
-                  <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50 text-left">
-                    <div className="space-y-2">
-                      <p className="font-medium">
-                        {key === "showLocation"
-                          ? "Show Location"
-                          : key === "showReports"
-                          ? "Show Reports"
-                          : "Allow Contact"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {key === "showLocation"
-                          ? "Display your general location to other users"
-                          : key === "showReports"
-                          ? "Allow others to see your public reports"
-                          : "Let community members contact you directly"}
-                      </p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={formData.privacy[key]}
-                      onChange={() => handleCheckboxChange("privacy", key)}
-                    />
+              {["showLocation", "showReports", "allowContact"].map((key) => (
+                <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50 text-left">
+                  <div className="space-y-2">
+                    <p className="font-medium">
+                      {key === "showLocation"
+                        ? "Show Location"
+                        : key === "showReports"
+                        ? "Show Reports"
+                        : "Allow Contact"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {key === "showLocation"
+                        ? "Display your general location to other users"
+                        : key === "showReports"
+                        ? "Allow others to see your public reports"
+                        : "Let community members contact you directly"}
+                    </p>
                   </div>
-                ))}
-              </div>
+                  <input
+                    type="checkbox"
+                    checked={formData.privacy[key]}
+                    onChange={() => handleCheckboxChange("privacy", key)}
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
@@ -511,26 +509,20 @@ export default function Profile() {
               <div className="flex items-center justify-between p-4 border rounded-md bg-red-50">
                 <div className="space-y-2">
                   <p className="font-medium text-red-700">Delete Account</p>
-                  <p className="text-sm text-red-500">Permanently delete your account and all associated data.</p>
+                  <p className="text-sm text-red-500">Permanently delete your account and all associated data</p>
                 </div>
-                <button
-                  onClick={handleDeleteAccount}
-                  className="px-4 py-2 text-white bg-red-600 rounded hover:bg-red-700"
-                >
-                  Delete
+                <button onClick={handleDeleteAccount} className="bg-red-600 text-white px-3 py-1 rounded">
+                  Delete Account
                 </button>
               </div>
 
-              <div className="flex items-center justify-between p-4 border rounded-md bg-gray-50">
-                <div className="space-y-2">
-                  <p className="font-medium">Export Data</p>
-                  <p className="text-sm text-gray-500">Download all your data in JSON format.</p>
+              <div className="flex items-center justify-between p-4 border rounded-md bg-yellow-50">
+                <div>
+                  <p className="font-medium text-yellow-700">Export Data</p>
+                  <p className="text-sm text-yellow-600">Download a copy of all your data</p>
                 </div>
-                <button
-                  onClick={handleExportData}
-                  className="px-4 py-2 text-white bg-purple-600 rounded hover:bg-purple-700"
-                >
-                  Export
+                <button onClick={handleExportData} className="bg-yellow-500 text-white px-3 py-1 rounded">
+                  Export Data
                 </button>
               </div>
             </div>
