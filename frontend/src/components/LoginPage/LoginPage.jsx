@@ -22,27 +22,35 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    
-    setTimeout(() => {
-     
-      const fakeToken = "fake-jwt-token-12345";
-      const user = { name: "Demo User", email };
+   
+    setLoading(true);
+    try {
+      const response = await fetch("https://your-backend-api.com/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (remember) {
-       
-        localStorage.setItem("token", fakeToken);
-        localStorage.setItem("user", JSON.stringify(user));
-      } else {
-      
-        localStorage.setItem("token", fakeToken);
-        localStorage.setItem("user", JSON.stringify(user));
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || "Login failed.");
+        setLoading(false);
+        return;
       }
 
+      const data = await response.json();
+      // Example: data = { token: "...", user: { ... } }
+      if (remember) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
       setLoading(false);
       navigate("/dashboard");
-    }, 900);
+    } catch (err) {
+      setError("Network error. Please try again.");
+      setLoading(false);
+    }
   };
-
   return (
     <div className="signin-container">
       {/* LEFT */}
