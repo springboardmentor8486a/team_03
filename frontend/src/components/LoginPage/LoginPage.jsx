@@ -20,8 +20,6 @@ export default function LoginPage() {
     if (!validateEmail(email)) return setError("Please enter a valid email.");
     if (password.length < 6) return setError("Password must be at least 6 characters.");
 
-    setLoading(true);
-
    
     setLoading(true);
     try {
