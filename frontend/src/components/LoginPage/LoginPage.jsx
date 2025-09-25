@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios"; // Axios import
-import "../../styles/loginpage.css";
-import logo from "../../assets/urbanalive.jpg";
+import "../styles/loginpage.css";
+import logo from "../assets/urbanalive.jpg"; 
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -18,46 +17,35 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
-    // Basic validation
     if (!validateEmail(email)) return setError("Please enter a valid email.");
     if (password.length < 6) return setError("Password must be at least 6 characters.");
 
     setLoading(true);
 
-    try {
-      // API call to your backend
-      const res = await axios.post("http://localhost:5000/api/users/login", {
-        email,
-        password,
-      });
-
-      // Assuming backend returns { token, user }
-      const { token, user } = res.data;
+    
+    setTimeout(() => {
+     
+      const fakeToken = "fake-jwt-token-12345";
+      const user = { name: "Demo User", email };
 
       if (remember) {
-        localStorage.setItem("token", token);
+       
+        localStorage.setItem("token", fakeToken);
         localStorage.setItem("user", JSON.stringify(user));
       } else {
-        sessionStorage.setItem("token", token);
-        sessionStorage.setItem("user", JSON.stringify(user));
+      
+        localStorage.setItem("token", fakeToken);
+        localStorage.setItem("user", JSON.stringify(user));
       }
 
       setLoading(false);
       navigate("/dashboard");
-    } catch (err) {
-      setLoading(false);
-      if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message); // backend error message
-      } else {
-        setError("Something went wrong. Please try again.");
-      }
-    }
+    }, 900);
   };
 
   return (
     <div className="signin-container">
-      {/* LEFT SIDE */}
+      {/* LEFT */}
       <div className="signin-left">
         <div className="left-inner">
           <div className="logo-block">
@@ -122,7 +110,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* RIGHT SIDE */}
+      {/* RIGHT */}
       <div className="signin-right">
         <div className="form-card">
           <h2 className="form-title">Welcome Back</h2>
@@ -160,7 +148,7 @@ export default function LoginPage() {
                 />{" "}
                 Remember me
               </label>
-              <Link to="/login/forgot" className="forgot-link">
+              <Link to="/forgot" className="forgot-link">
                 Forgot password?
               </Link>
             </div>
@@ -173,7 +161,7 @@ export default function LoginPage() {
           </form>
 
           <div className="signup-line">
-            New to our platform? <Link to="/login/signup">Create Your Account →</Link>
+            New to our platform? <Link to="/signup">Create Your Account →</Link>
           </div>
 
           <div className="small-icons">
