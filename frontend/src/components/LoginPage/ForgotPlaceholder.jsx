@@ -22,16 +22,43 @@ export default function ForgotPlaceholder() {
       setError("Please enter a valid email address.");
       return;
     }
+setLoading(true);
 
-    setLoading(true);
+try {
+  // 🔹 Call your backend to send OTP
+  const response = await fetch("https://your-backend-api.com/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
 
-    setTimeout(() => {
-      setLoading(false);
-      setMessage(`A verification code was sent to ${email}. Check your inbox.`);
-      sessionStorage.setItem("forgot_email", email);
-      setTimeout(() => navigate("/verify"), 700); // Redirect after short delay
-    }, 900);
-  };
+  const data = await response.json();
+
+  if (!response.ok) {
+    setError(data.message || "Failed to send verification code.");
+    setLoading(false);
+    return;
+  }
+
+  // ✅ Success
+  setMessage(`A verification code was sent to ${email}. Check your inbox.`);
+
+  sessionStorage.setItem("forgot_email", email);
+
+  // (Optional) if backend returns a requestId / resetToken, store it
+  if (data.requestId) {
+    sessionStorage.setItem("request_id", data.requestId);
+  }
+
+  // Redirect to verify page
+  setTimeout(() => navigate("/verify"), 1000);
+
+} catch (err) {
+  setError("Network error, please try again.");
+} finally {
+  setLoading(false);
+}
+
 
   return (
     <div className="forgot-container">
