@@ -121,7 +121,7 @@ const verifyCode = async (e) => {
   setLoading(true);
 
   try {
-    const response = await fetch("https://your-backend-api.com/verify-otp", {
+    const response = await fetch("http://localhost:5000/api/users/verify-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, otp: code }),
@@ -156,7 +156,7 @@ const handleResend = async () => {
   setResendSecs(60);
 
   try {
-    const response = await fetch("https://your-backend-api.com/resend-otp", {
+    const response = await fetch("http://localhost:5000/api/users/verify-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
