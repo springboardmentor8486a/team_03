@@ -26,7 +26,7 @@ export default function ResetPassword() {
   const email = sessionStorage.getItem("forgot_email");
   const requestId = sessionStorage.getItem("request_id"); // optional if backend returns one
 
-  const response = await fetch("https://your-backend-api.com/reset-password", {
+  const response = await fetch("http://localhost:5000/api/users/reset-password", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, requestId, password }),
