@@ -22,33 +22,59 @@ export default function LoginPage() {
 
    
     setLoading(true);
-    try {
+  
+   try {
+      // Step 1: Login request
       const response = await fetch("http://localhost:5000/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.message || "Login failed.");
+        setError(data.message || "Login failed.");
         setLoading(false);
         return;
       }
 
-      const data = await response.json();
-      // Example: data = { token: "...", user: { ... } }
-      if (remember) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+      // Step 2: Save token
+      localStorage.setItem("token", data.token);
+
+      // Step 3: Fetch user details from backend (instead of relying on localStorage only)
+      const userResponse = await fetch("http://localhost:5000/api/users/login", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.token}`,
+        },
+      });
+
+      const userData = await userResponse.json();
+
+      if (!userResponse.ok) {
+        setError("Failed to fetch user details.");
+        setLoading(false);
+        return;
       }
+
+      // Save user details
+      if (remember) {
+        localStorage.setItem("user", JSON.stringify(userData));
+      } else {
+        sessionStorage.setItem("user", JSON.stringify(userData));
+      }
+
       setLoading(false);
       navigate("/dashboard");
     } catch (err) {
+      console.error(err);
       setError("Network error. Please try again.");
       setLoading(false);
     }
   };
+    
   return (
     <div className="signin-container">
       {/* LEFT */}
