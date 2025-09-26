@@ -138,7 +138,7 @@ const verifyCode = async (e) => {
   
     setMessage("Code verified. Redirecting...");
     setTimeout(() => {
-      navigate("/reset-password", { state: { token: data.resetToken } });
+      navigate("/login/reset-password", { state: { token: data.resetToken } });
     }, 700);
 
   } catch {

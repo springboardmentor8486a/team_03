@@ -51,7 +51,7 @@ const response = await fetch("http://localhost:5000/api/users/forgot-password", 
   }
 
   // Redirect to verify page
-  setTimeout(() => navigate("/verify"), 1000);
+  setTimeout(() => navigate("/login/verify"), 1000);
 
 } catch {
   setError("Network error, please try again.");

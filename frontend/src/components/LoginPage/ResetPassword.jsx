@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/forgotpassword.css";
+import "../../styles/forgotpassword.css";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -9,7 +9,7 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -21,31 +21,32 @@ export default function ResetPassword() {
       setError("Passwords do not match.");
       return;
     }
-   try {
-  // 🔹 Retrieve email and requestId (saved during ForgotPassword + Verify steps)
-  const email = sessionStorage.getItem("forgot_email");
-  const requestId = sessionStorage.getItem("request_id"); // optional if backend returns one
+    try {
+      // You need to provide 'email' and 'requestId' variables here
+      // For example, get them from props or context
+      const email = ""; // TODO: Replace with actual email
+      const requestId = ""; // TODO: Replace with actual requestId
 
-  const response = await fetch("http://localhost:5000/api/users/reset-password", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, requestId, password }),
-  });
+      const response = await fetch("http://localhost:5000/api/users/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, requestId, password }),
+      });
 
-  const data = await response.json();
+      const data = await response.json();
 
-  if (!response.ok) {
-    setError(data.message || "Failed to reset password.");
-    return;
-  }
+      if (!response.ok) {
+        setError(data.message || "Failed to reset password.");
+        return;
+      }
 
-  // ✅ Success
-  setSuccess("Password reset successful! Redirecting to login...");
-  setTimeout(() => navigate("/"), 1500);
-
-} catch (err) {
-  setError("Network error, please try again.");
-}
+      // ✅ Success
+      setSuccess("Password reset successful! Redirecting to login...");
+      setTimeout(() => navigate("/"), 1500);
+    } catch {
+      setError("Network error, please try again.");
+    }
+  };
 
   return (
     <div className="forgot-container">
