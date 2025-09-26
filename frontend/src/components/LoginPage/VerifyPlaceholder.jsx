@@ -107,73 +107,84 @@ export default function VerifyPlaceholder() {
     const nextIndex = Math.min(chars.length, 5);
     inputsRef.current[nextIndex]?.focus();
   };
+const verifyCode = async (e) => {
+  e.preventDefault();
+  setError("");
+  setMessage("");
 
-  const verifyCode = async (e) => {
-    e.preventDefault();
-    setError("");
-    setMessage("");
+  const code = digits.join("");
+  if (code.length !== 6) {
+    setError("Enter the 6-digit verification code.");
+    return;
+  }
 
-    const code = digits.join("");
-    if (code.length !== 6) {
-      setError("Enter the 6-digit verification code.");
+  setLoading(true);
+
+  try {
+    const response = await fetch("https://your-backend-api.com/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp: code }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setError(data.message || "Invalid OTP. Try again.");
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-
+  
+    setMessage("Code verified. Redirecting...");
     setTimeout(() => {
-      setLoading(false);
-      const storedOtp = sessionStorage.getItem("otp_code");
-      if (code === storedOtp) {
-        setMessage("Code verified. Redirecting...");
-        setTimeout(() => navigate("/reset-password"), 700);
-      } else {
-        setError("Invalid verification code. Try again.");
-      }
-    }, 900);
-  };
+      navigate("/reset-password", { state: { token: data.resetToken } });
+    }, 700);
 
-  const generateOtp = () => {
-    // Generate a random 6-digit OTP
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  };
+  } catch (err) {
+    setError("Network error, please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
-  useEffect(() => {
-    // On mount, generate and store OTP if not already present
-    if (!sessionStorage.getItem("otp_code")) {
-      const otp = generateOtp();
-      sessionStorage.setItem("otp_code", otp);
+const handleResend = async () => {
+  if (resendDisabled) return;
+  setError("");
+  setMessage("");
+  setResendDisabled(true);
+  setResendSecs(60);
+
+  try {
+    const response = await fetch("https://your-backend-api.com/resend-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setError(data.message || "Failed to resend OTP.");
+      return;
     }
-  }, []);
 
-  const handleResend = async () => {
-    setError("");
-    setMessage("");
-    if (resendDisabled) return;
+    setMessage(`A new code has been sent to ${maskEmail(email)}.`);
+  } catch (err) {
+    setError("Network error, please try again.");
+  }
 
-    setResendDisabled(true);
-    setResendSecs(60);
-
-    // Generate and store new OTP
-    const otp = generateOtp();
-    sessionStorage.setItem("otp_code", otp);
-
-    setMessage("Resending verification code...");
-    setTimeout(() => {
-      setMessage(`A new code has been sent to ${email || "your email"}.`);
-    }, 600);
-
-    const t = setInterval(() => {
-      setResendSecs((s) => {
-        if (s <= 1) {
-          clearInterval(t);
-          setResendDisabled(false);
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
-  };
+  const t = setInterval(() => {
+    setResendSecs((s) => {
+      if (s <= 1) {
+        clearInterval(t);
+        setResendDisabled(false);
+        return 0;
+      }
+      return s - 1;
+    });
+  }, 1000);
+};
 
   return (
     <div className="verify-container">
