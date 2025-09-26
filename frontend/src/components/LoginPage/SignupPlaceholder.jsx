@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../styles/signuppage.css";
-import logo from "../assets/urbanalive.jpg"; 
+import "../../styles/signuppage.css";
+import logo from "../../assets/urbanalive.jpg"; 
 
 export default function SignupPlaceholder() {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ export default function SignupPlaceholder() {
 
   const validateEmail = (v) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).toLowerCase());
-  const validatePhone = (p) => /^[0-9\-\+\s]{7,15}$/.test(p);
+  const validatePhone = (p) => /^[0-9\-+\s]{7,15}$/.test(p);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../styles/loginpage.css";
-import logo from "../assets/urbanalive.jpg"; 
+import axios from "axios";
+import "../../styles/loginpage.css";
+import logo from "../../assets/urbanalive.jpg";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -17,67 +18,56 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // ✅ Basic validation
     if (!validateEmail(email)) return setError("Please enter a valid email.");
-    if (password.length < 6) return setError("Password must be at least 6 characters.");
+    if (password.length < 6)
+      return setError("Password must be at least 6 characters.");
 
-   
     setLoading(true);
-  
-   try {
-      // Step 1: Login request
-      const response = await fetch("http://localhost:5000/api/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+
+    try {
+      // 🧹 Clear any previous session/user data before new login
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // 🔑 API request to login
+      const res = await axios.post("http://localhost:5000/api/users/login", {
+        email,
+        password,
       });
 
-      const data = await response.json();
+      // ✅ Expecting backend to return { token, user }
+      const { token, user } = res.data;
 
-      if (!response.ok) {
-        setError(data.message || "Login failed.");
-        setLoading(false);
-        return;
-      }
-
-      // Step 2: Save token
-      localStorage.setItem("token", data.token);
-
-      // Step 3: Fetch user details from backend (instead of relying on localStorage only)
-      const userResponse = await fetch("http://localhost:5000/api/users/login", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${data.token}`,
-        },
-      });
-
-      const userData = await userResponse.json();
-
-      if (!userResponse.ok) {
-        setError("Failed to fetch user details.");
-        setLoading(false);
-        return;
-      }
-
-      // Save user details
+      // 📦 Store the new session securely
       if (remember) {
-        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
       } else {
-        sessionStorage.setItem("user", JSON.stringify(userData));
+        sessionStorage.setItem("token", token);
+        sessionStorage.setItem("user", JSON.stringify(user));
       }
 
+      // 🚀 Redirect to dashboard
       setLoading(false);
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      setError("Network error. Please try again.");
       setLoading(false);
+
+      // 🔎 Show backend error message if available
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     }
   };
-    
+
   return (
     <div className="signin-container">
-      {/* LEFT */}
+      {/* LEFT SIDE */}
       <div className="signin-left">
         <div className="left-inner">
           <div className="logo-block">
@@ -104,7 +94,9 @@ export default function LoginPage() {
               <div className="f-icon">✔</div>
               <div>
                 <div className="f-title">Easy Reporting</div>
-                <div className="f-sub">Submit issues with photos and location data</div>
+                <div className="f-sub">
+                  Submit issues with photos and location data
+                </div>
               </div>
             </div>
 
@@ -112,7 +104,9 @@ export default function LoginPage() {
               <div className="f-icon">⏱</div>
               <div>
                 <div className="f-title">Real-time Tracking</div>
-                <div className="f-sub">Follow your reports from submission to resolution</div>
+                <div className="f-sub">
+                  Follow your reports from submission to resolution
+                </div>
               </div>
             </div>
 
@@ -120,7 +114,9 @@ export default function LoginPage() {
               <div className="f-icon">👥</div>
               <div>
                 <div className="f-title">Community Impact</div>
-                <div className="f-sub">Join thousands making a difference locally</div>
+                <div className="f-sub">
+                  Join thousands making a difference locally
+                </div>
               </div>
             </div>
           </div>
@@ -142,7 +138,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* RIGHT */}
+      {/* RIGHT SIDE */}
       <div className="signin-right">
         <div className="form-card">
           <h2 className="form-title">Welcome Back</h2>
@@ -180,7 +176,7 @@ export default function LoginPage() {
                 />{" "}
                 Remember me
               </label>
-              <Link to="/forgot" className="forgot-link">
+              <Link to="/login/forgot" className="forgot-link">
                 Forgot password?
               </Link>
             </div>
@@ -193,7 +189,8 @@ export default function LoginPage() {
           </form>
 
           <div className="signup-line">
-            New to our platform? <Link to="/signup">Create Your Account →</Link>
+            New to our platform?{" "}
+            <Link to="/login/signup">Create Your Account →</Link>
           </div>
 
           <div className="small-icons">

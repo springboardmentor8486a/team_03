@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../styles/forgotpassword.css";
-import logo from "../assets/urbanalive.jpg"; 
+import "../../styles/forgotpassword.css";
+import logo from "../../assets/urbanalive.jpg"; 
 
 export default function ForgotPlaceholder() {
   const navigate = useNavigate();
@@ -26,12 +26,11 @@ setLoading(true);
 
 try {
   // 🔹 Call your backend to send OTP
-  const response = await fetch("http://localhost:5000/api/users/forgot-password
-", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
+const response = await fetch("http://localhost:5000/api/users/forgot-password", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email }),
+});
 
   const data = await response.json();
 
@@ -54,12 +53,12 @@ try {
   // Redirect to verify page
   setTimeout(() => navigate("/verify"), 1000);
 
-} catch (err) {
+} catch {
   setError("Network error, please try again.");
-} finally {
-  setLoading(false);
+  } finally {
+    setLoading(false);
+  }
 }
-
 
   return (
     <div className="forgot-container">

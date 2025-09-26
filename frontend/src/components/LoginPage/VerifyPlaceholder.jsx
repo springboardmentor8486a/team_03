@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../styles/verify.css";
-import logo from "../assets/urbanalive.jpg"; 
+import "../../styles/verify.css";
+import logo from "../../assets/urbanalive.jpg"; 
 
 export default function VerifyPlaceholder() {
   const navigate = useNavigate();
 
   const savedEmail = sessionStorage.getItem("forgot_email") || "";
-  const [email, setEmail] = useState(savedEmail);
+  const [email] = useState(savedEmail);
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const inputsRef = useRef([]);
   const [loading, setLoading] = useState(false);
@@ -141,7 +141,7 @@ const verifyCode = async (e) => {
       navigate("/reset-password", { state: { token: data.resetToken } });
     }, 700);
 
-  } catch (err) {
+  } catch {
     setError("Network error, please try again.");
   } finally {
     setLoading(false);
@@ -170,7 +170,7 @@ const handleResend = async () => {
     }
 
     setMessage(`A new code has been sent to ${maskEmail(email)}.`);
-  } catch (err) {
+  } catch {
     setError("Network error, please try again.");
   }
 
