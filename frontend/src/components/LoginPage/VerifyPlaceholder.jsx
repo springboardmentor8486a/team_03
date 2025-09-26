@@ -1,170 +1,266 @@
-import { useState, useRef, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
-import logo from "../../assets/urbanalive.jpg";
+import React, { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import "../styles/verify.css";
+import logo from "../assets/urbanalive.jpg"; 
 
 export default function VerifyPlaceholder() {
   const navigate = useNavigate();
+
+  const savedEmail = sessionStorage.getItem("forgot_email") || "";
+  const [email, setEmail] = useState(savedEmail);
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [resendSecs, setResendSecs] = useState(60);
-
   const inputsRef = useRef([]);
-  const email = sessionStorage.getItem("forgot_email");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [resendSecs, setResendSecs] = useState(60);
+  const [resendDisabled, setResendDisabled] = useState(true);
 
-  // Countdown for resend
+  const maskEmail = (e) => {
+    if (!e) return "your email";
+    const [local, domain] = e.split("@");
+    if (!domain) return e;
+    if (local.length <= 2) return `${local}***@${domain}`;
+    return `${local.slice(0, 2)}${"*".repeat(Math.max(2, local.length - 2))}@${domain}`;
+  };
+
+
   useEffect(() => {
-    if (resendSecs > 0) {
-      const timer = setTimeout(() => setResendSecs(resendSecs - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [resendSecs]);
-
-  // Handle input change
-  const handleChange = (value, index) => {
-    if (/^[0-9]?$/.test(value)) {
-      const newDigits = [...digits];
-      newDigits[index] = value;
-      setDigits(newDigits);
-
-      if (value && index < 5) {
-        inputsRef.current[index + 1]?.focus();
-      }
-    }
-  };
-
-  // Handle backspace
-  const handleKeyDown = (e, index) => {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
-      inputsRef.current[index - 1]?.focus();
-    }
-  };
-
-  // Handle paste (entire code)
-  const handlePaste = (e) => {
-    const pasteData = e.clipboardData.getData("text").slice(0, 6).split("");
-    if (pasteData.every((ch) => /^[0-9]$/.test(ch))) {
-      setDigits(pasteData.concat(Array(6 - pasteData.length).fill("")));
-      inputsRef.current[5]?.focus();
-    }
-  };
-
-  // Submit verification
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setMessage("");
-
-    const code = digits.join("");
-    if (code.length !== 6) return setError("Please enter the full 6-digit code.");
-
-    setLoading(true);
-    try {
-      const response = await axios.post("http://localhost:5000/api/users/verify-code", {
-        email,
-        code,
-      });
-
-      if (response.data.success) {
-        setMessage("Code verified! You can now reset your password.");
-        navigate("/LoginPage/ResetPassword");
-      } else {
-        setError(response.data.message || "Invalid code. Please try again.");
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "Verification failed. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Resend handler
-  const handleResend = () => {
+    setResendDisabled(true);
     setResendSecs(60);
-    setMessage("A new code has been sent to your email.");
-    // 🔗 You can also call your backend here to resend OTP
+    const t = setInterval(() => {
+      setResendSecs((s) => {
+        if (s <= 1) {
+          clearInterval(t);
+          setResendDisabled(false);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+
+    setTimeout(() => inputsRef.current[0]?.focus?.(), 50);
+    return () => clearInterval(t);
+  }, []);
+
+  const handleChange = (e, idx) => {
+    const val = e.target.value.replace(/\D/g, ""); 
+    if (!val) {
+      updateDigit(idx, "");
+      return;
+    }
+
+    if (val.length > 1) {
+      const chars = val.split("");
+      const newDigits = [...digits];
+      let i = idx;
+      for (let ch of chars) {
+        if (i > 5) break;
+        newDigits[i] = ch;
+        i++;
+      }
+      setDigits(newDigits);
+      // focus next empty
+      if (i <= 5) inputsRef.current[i]?.focus();
+      else inputsRef.current[5]?.focus();
+      return;
+    }
+    // normal single char
+    updateDigit(idx, val);
+    // focus next
+    if (idx < 5 && val) {
+      inputsRef.current[idx + 1]?.focus();
+    }
   };
+
+  const updateDigit = (idx, value) => {
+    setDigits((prev) => {
+      const copy = [...prev];
+      copy[idx] = value;
+      return copy;
+    });
+  };
+
+  const handleKeyDown = (e, idx) => {
+    if (e.key === "Backspace") {
+      if (digits[idx]) {
+        updateDigit(idx, "");
+      } else if (idx > 0) {
+        inputsRef.current[idx - 1]?.focus();
+        updateDigit(idx - 1, "");
+      }
+    } else if (e.key === "ArrowLeft" && idx > 0) {
+      inputsRef.current[idx - 1]?.focus();
+    } else if (e.key === "ArrowRight" && idx < 5) {
+      inputsRef.current[idx + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "");
+    if (!pasted) return;
+    const chars = pasted.split("").slice(0, 6);
+    const newDigits = ["", "", "", "", "", ""];
+    for (let i = 0; i < chars.length; i++) newDigits[i] = chars[i];
+    setDigits(newDigits);
+    const nextIndex = Math.min(chars.length, 5);
+    inputsRef.current[nextIndex]?.focus();
+  };
+const verifyCode = async (e) => {
+  e.preventDefault();
+  setError("");
+  setMessage("");
+
+  const code = digits.join("");
+  if (code.length !== 6) {
+    setError("Enter the 6-digit verification code.");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const response = await fetch("http://localhost:5000/api/users/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, otp: code }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setError(data.message || "Invalid OTP. Try again.");
+      setLoading(false);
+      return;
+    }
+
+  
+    setMessage("Code verified. Redirecting...");
+    setTimeout(() => {
+      navigate("/reset-password", { state: { token: data.resetToken } });
+    }, 700);
+
+  } catch (err) {
+    setError("Network error, please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleResend = async () => {
+  if (resendDisabled) return;
+  setError("");
+  setMessage("");
+  setResendDisabled(true);
+  setResendSecs(60);
+
+  try {
+    const response = await fetch("http://localhost:5000/api/users/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setError(data.message || "Failed to resend OTP.");
+      return;
+    }
+
+    setMessage(`A new code has been sent to ${maskEmail(email)}.`);
+  } catch (err) {
+    setError("Network error, please try again.");
+  }
+
+  const t = setInterval(() => {
+    setResendSecs((s) => {
+      if (s <= 1) {
+        clearInterval(t);
+        setResendDisabled(false);
+        return 0;
+      }
+      return s - 1;
+    });
+  }, 1000);
+};
 
   return (
-    <div className="flex min-h-screen">
-      {/* LEFT SIDE */}
-      <div className="hidden md:flex flex-1 items-center justify-center bg-gradient-to-b from-[#6e21f2] via-[#b81fe7] to-[#8421b7] text-white p-10">
-        <div className="max-w-md">
-          <div className="flex items-center gap-3 mb-6">
-            <img src={logo} alt="logo" className="w-12 h-12 rounded-xl bg-white/20 p-2" />
-            <div>
-              <div className="font-bold text-2xl">UrbanAlive</div>
-              <div className="text-sm opacity-90">Civic Engagement Platform</div>
+    <div className="verify-container">
+      {/* LEFT */}
+      <div className="verify-left">
+        <div className="left-inner">
+          <div className="brand-row">
+            <div className="brand-logo">
+              <img src={logo} alt="logo" />
+            </div>
+            <div className="brand-text">
+              <div className="brand-title">UrbanAlive</div>
+              <div className="brand-sub">Civic Engagement Platform</div>
             </div>
           </div>
-          <h1 className="text-4xl font-bold mb-3">Verify Your Identity</h1>
-          <p className="text-white/90">
-            We’ve sent a 6-digit verification code to your email. Enter the code
-            below to continue.
+
+          <h1 className="verify-heading">Verify Your Identity</h1>
+
+          <p className="verify-desc">
+            We've sent a 6-digit verification code to your email.
+            Enter the code below to continue.
           </p>
         </div>
       </div>
 
-      {/* RIGHT SIDE */}
-      <div className="flex flex-1 items-center justify-center bg-white p-8">
-        <div className="w-full max-w-md">
-          <Link to="/login" className="text-sm text-gray-500 hover:text-purple-600">
-            ← Back to Login
-          </Link>
+      {/* RIGHT */}
+      <div className="verify-right">
+        <div className="verify-card">
+          <div className="back-row">
+            <button className="back-btn" onClick={() => navigate(-1)}>
+              ← Back to Login
+            </button>
+          </div>
 
-          <h2 className="text-2xl font-bold mt-6 mb-2">Enter Verification Code</h2>
-          <p className="text-gray-600 mb-6">
-            We sent a code to <span className="font-semibold">{email}</span>
+          <h2 className="verify-title">Enter Verification Code</h2>
+          <p className="verify-sub">
+            We sent a code to <strong>{maskEmail(email)}</strong>
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* OTP INPUTS */}
-            <div className="flex gap-3 justify-center" onPaste={handlePaste}>
-              {digits.map((digit, i) => (
+          <form className="verify-form" onSubmit={verifyCode} onPaste={handlePaste}>
+            <div className="code-row">
+              {digits.map((d, i) => (
                 <input
                   key={i}
-                  type="text"
-                  maxLength="1"
-                  value={digit}
-                  onChange={(e) => handleChange(e.target.value, i)}
-                  onKeyDown={(e) => handleKeyDown(e, i)}
                   ref={(el) => (inputsRef.current[i] = el)}
-                  className="w-12 h-12 text-center text-xl border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  className="code-input"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={1}
+                  value={d}
+                  onChange={(e) => handleChange(e, i)}
+                  onKeyDown={(e) => handleKeyDown(e, i)}
                 />
               ))}
             </div>
 
-            {error && <div className="text-red-600 text-sm">{error}</div>}
-            {message && <div className="text-green-700 text-sm">{message}</div>}
+            {error && <div className="form-error">{error}</div>}
+            {message && <div className="form-success">{message}</div>}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-lg bg-gradient-to-r from-[#8e2df1] to-[#2ad29f] text-white font-bold disabled:opacity-70 disabled:cursor-not-allowed"
-            >
+            <button className="verify-btn" type="submit" disabled={loading}>
               {loading ? "Verifying..." : "Verify Code"}
             </button>
-
-            <div className="text-sm text-gray-500 text-center">
-              Resend code in{" "}
-              <span className="font-semibold">{resendSecs}s</span>
-            </div>
-
-            {resendSecs === 0 && (
-              <div className="text-sm text-center">
-                Didn’t receive the code?{" "}
-                <button
-                  type="button"
-                  onClick={handleResend}
-                  className="text-purple-600 font-semibold hover:underline"
-                >
-                  Try again
-                </button>
-              </div>
-            )}
           </form>
+
+          <div className="resend-row">
+            {resendDisabled ? (
+              <span className="resend-text">Resend code in {resendSecs}s</span>
+            ) : (
+              <button className="resend-link" onClick={handleResend}>
+                Resend code
+              </button>
+            )}
+            <div className="try-again">
+              Didn't receive the code? <button className="try-link" onClick={handleResend}>Try again</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
