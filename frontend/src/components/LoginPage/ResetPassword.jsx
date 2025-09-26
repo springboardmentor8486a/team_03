@@ -21,12 +21,31 @@ export default function ResetPassword() {
       setError("Passwords do not match.");
       return;
     }
-    // Simulate API call
-    setTimeout(() => {
-      setSuccess("Password reset successful! Redirecting to login...");
-      setTimeout(() => navigate("/"), 1200);
-    }, 900);
-  };
+   try {
+  // 🔹 Retrieve email and requestId (saved during ForgotPassword + Verify steps)
+  const email = sessionStorage.getItem("forgot_email");
+  const requestId = sessionStorage.getItem("request_id"); // optional if backend returns one
+
+  const response = await fetch("https://your-backend-api.com/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, requestId, password }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    setError(data.message || "Failed to reset password.");
+    return;
+  }
+
+  // ✅ Success
+  setSuccess("Password reset successful! Redirecting to login...");
+  setTimeout(() => navigate("/"), 1500);
+
+} catch (err) {
+  setError("Network error, please try again.");
+}
 
   return (
     <div className="forgot-container">
