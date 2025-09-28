@@ -16,6 +16,10 @@ app.use(cors({
     credentials: true,
 }));
 
+// Serve static files from uploads folder
+import path from "path";
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
 // Middleware
 app.use(express.json());
 

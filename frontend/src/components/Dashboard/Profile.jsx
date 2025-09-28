@@ -31,6 +31,7 @@ export default function Profile() {
     city: "",
     address: "",
     bio: "",
+    photo: null,
     notifications: {
       emailUpdates: true,
       smsAlerts: false,
@@ -73,6 +74,7 @@ export default function Profile() {
           city: userData.city || "",
           address: userData.address || "",
           bio: userData.bio || "",
+          photo: userData.photo || null,
           notifications: {
             emailUpdates: userData.notifications?.emailUpdates ?? true,
             smsAlerts: userData.notifications?.smsAlerts ?? false,
@@ -110,6 +112,12 @@ export default function Profile() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handlePhotoChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setFormData((prev) => ({ ...prev, photo: e.target.files[0] }));
+    }
+  };
+
   const handleCheckboxChange = (section, key) => {
     setFormData((prev) => ({
       ...prev,
@@ -129,17 +137,19 @@ export default function Profile() {
     }
 
     try {
-      const updateData = {
-        name: formData.name,
-        phone: formData.phone,
-        city: formData.city,
-        address: formData.address,
-        bio: formData.bio,
-        notifications: formData.notifications,
-        privacy: formData.privacy,
-      };
+      const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("phone", formData.phone);
+      formDataToSend.append("city", formData.city);
+      formDataToSend.append("address", formData.address);
+      formDataToSend.append("bio", formData.bio);
+      formDataToSend.append("notifications", JSON.stringify(formData.notifications));
+      formDataToSend.append("privacy", JSON.stringify(formData.privacy));
+      if (formData.photo) {
+        formDataToSend.append("photo", formData.photo);
+      }
 
-      const response = await axios.put("http://localhost:5000/api/users/profile", updateData, {
+      const response = await axios.put("http://localhost:5000/api/users/profile", formDataToSend, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -147,7 +157,7 @@ export default function Profile() {
 
       setSuccess("Profile updated successfully!");
       if (updatedUser) setFormData((prev) => ({ ...prev, ...updatedUser }));
-      setTimeout(() => setSuccess(""), 3000);
+  setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       console.error("Error updating profile:", err);
       if (err.response?.status === 401) {
@@ -247,14 +257,37 @@ export default function Profile() {
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
         {/* Sidebar */}
         <div className="w-full lg:w-1/4 bg-white shadow rounded-2xl p-6 flex flex-col items-center">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative">
-            {formData.name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .toUpperCase()
-              .slice(0, 2)}
+          <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative overflow-hidden">
+            {formData.photo ? (
+              <img
+                src={typeof formData.photo === 'string' ? `http://localhost:5000/uploads/${formData.photo}` : URL.createObjectURL(formData.photo)}
+                alt="Profile"
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              formData.name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2)
+            )}
             <FiCamera className="absolute -bottom-1 -right-1 w-4 h-4 text-gray-600" />
+          </div>
+          <div className="mt-2 w-full flex flex-col items-center">
+            <label htmlFor="profile-photo" className="cursor-pointer px-3 py-1 bg-purple-100 text-purple-700 rounded shadow hover:bg-purple-200 transition text-sm">
+              Choose Profile Photo
+            </label>
+            <input
+              id="profile-photo"
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              style={{ display: 'none' }}
+            />
+            <span className="text-xs text-gray-500 mt-1">
+              {formData.photo && typeof formData.photo !== 'string' ? formData.photo.name : !formData.photo ? 'No file chosen' : ''}
+            </span>
           </div>
           <h2 className="mt-4 font-semibold text-gray-800 text-lg">{formData.name}</h2>
           <p className="text-sm text-gray-500">{formData.email}</p>

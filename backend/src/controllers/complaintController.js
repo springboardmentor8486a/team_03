@@ -15,6 +15,9 @@ export const createComplaint = asyncHandler(async (req, res) => {
   }
 
   try {
+    // Get photo filename if uploaded
+    const photo = req.file ? req.file.filename : null;
+
     // Create complaint
     const complaint = await Complaint.create({
       title: title.trim(),
@@ -22,7 +25,8 @@ export const createComplaint = asyncHandler(async (req, res) => {
       priority: priority || "Medium",
       location: location.trim(),
       description: description.trim(),
-      reportedBy: req.user.id
+      reportedBy: req.user.id,
+      photo
     });
 
     // Populate user information

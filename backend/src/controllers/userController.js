@@ -248,6 +248,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       throw new Error("User not found");
     }
 
+
     // Fields that can be updated
     const allowedFields = [
       'name', 'phone', 'city', 'address', 'bio', 
@@ -265,6 +266,11 @@ const updateUserProfile = asyncHandler(async (req, res) => {
         }
       }
     });
+
+    // Handle photo upload
+    if (req.file) {
+      user.photo = req.file.filename;
+    }
 
     const updatedUser = await user.save();
 

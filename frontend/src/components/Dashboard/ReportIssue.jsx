@@ -111,21 +111,24 @@ export default function ReportIssue() {
     setSuccess('');
 
     try {
+      // Prepare FormData for multipart/form-data
+      const formDataToSend = new FormData();
+      formDataToSend.append("title", formData.title);
+      formDataToSend.append("category", formData.category);
+      formDataToSend.append("priority", formData.priority);
+      formDataToSend.append("location", formData.location);
+      formDataToSend.append("description", formData.description);
+      // Only send first photo (backend expects single file)
+      if (formData.photos && formData.photos.length > 0) {
+        formDataToSend.append("photo", formData.photos[0]);
+      }
 
-      
       const response = await fetch('http://localhost:5000/api/complaints', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          title: formData.title,
-          category: formData.category,
-          priority: formData.priority,
-          location: formData.location,
-          description: formData.description
-        })
+        body: formDataToSend
       });
 
       const data = await response.json();
@@ -136,7 +139,6 @@ export default function ReportIssue() {
 
       if (data.success) {
         setSuccess('Report submitted successfully!');
-        
         // Reset form
         setFormData({
           category: "",
@@ -146,7 +148,6 @@ export default function ReportIssue() {
           priority: "",
           photos: [],
         });
-
         // Redirect to dashboard after 2 seconds
         setTimeout(() => {
           navigate('/dashboard');
@@ -326,6 +327,14 @@ export default function ReportIssue() {
               <p className="text-xs text-gray-400 mt-1">
                 Maximum 5 photos, up to 10MB each
               </p>
+              {/* Photo Preview */}
+              {formData.photos[0] && (
+                <img
+                  src={URL.createObjectURL(formData.photos[0])}
+                  alt="Preview"
+                  style={{ maxWidth: 200, marginTop: 10, borderRadius: 8, boxShadow: '0 2px 8px #ccc' }}
+                />
+              )}
             </div>
           </div>
 
