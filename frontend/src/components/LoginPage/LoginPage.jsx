@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios"; // Axios import
+import axios from "axios";
 import "../../styles/loginpage.css";
 import logo from "../../assets/urbanalive.jpg";
 
@@ -19,22 +19,28 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    // Basic validation
+    // ✅ Basic validation
     if (!validateEmail(email)) return setError("Please enter a valid email.");
-    if (password.length < 6) return setError("Password must be at least 6 characters.");
+    if (password.length < 6)
+      return setError("Password must be at least 6 characters.");
 
     setLoading(true);
 
     try {
-      // API call to your backend
+      // 🧹 Clear any previous session/user data before new login
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // 🔑 API request to login
       const res = await axios.post("http://localhost:5000/api/users/login", {
         email,
         password,
       });
 
-      // Assuming backend returns { token, user }
+      // ✅ Expecting backend to return { token, user }
       const { token, user } = res.data;
 
+      // 📦 Store the new session securely
       if (remember) {
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
@@ -43,12 +49,16 @@ export default function LoginPage() {
         sessionStorage.setItem("user", JSON.stringify(user));
       }
 
+      // 🚀 Redirect to dashboard
       setLoading(false);
       navigate("/dashboard");
     } catch (err) {
+      console.error(err);
       setLoading(false);
+
+      // 🔎 Show backend error message if available
       if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message); // backend error message
+        setError(err.response.data.message);
       } else {
         setError("Something went wrong. Please try again.");
       }
@@ -84,7 +94,9 @@ export default function LoginPage() {
               <div className="f-icon">✔</div>
               <div>
                 <div className="f-title">Easy Reporting</div>
-                <div className="f-sub">Submit issues with photos and location data</div>
+                <div className="f-sub">
+                  Submit issues with photos and location data
+                </div>
               </div>
             </div>
 
@@ -92,7 +104,9 @@ export default function LoginPage() {
               <div className="f-icon">⏱</div>
               <div>
                 <div className="f-title">Real-time Tracking</div>
-                <div className="f-sub">Follow your reports from submission to resolution</div>
+                <div className="f-sub">
+                  Follow your reports from submission to resolution
+                </div>
               </div>
             </div>
 
@@ -100,7 +114,9 @@ export default function LoginPage() {
               <div className="f-icon">👥</div>
               <div>
                 <div className="f-title">Community Impact</div>
-                <div className="f-sub">Join thousands making a difference locally</div>
+                <div className="f-sub">
+                  Join thousands making a difference locally
+                </div>
               </div>
             </div>
           </div>
@@ -173,7 +189,8 @@ export default function LoginPage() {
           </form>
 
           <div className="signup-line">
-            New to our platform? <Link to="/login/signup">Create Your Account →</Link>
+            New to our platform?{" "}
+            <Link to="/login/signup">Create Your Account →</Link>
           </div>
 
           <div className="small-icons">

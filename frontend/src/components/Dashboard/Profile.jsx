@@ -45,21 +45,26 @@ export default function Profile() {
     },
   });
 
-  const getAuthToken = () => localStorage.getItem("token");
+  // Helper: get token
+  const getAuthToken = () => {
+    return localStorage.getItem("token") || sessionStorage.getItem("token") || null;
+  };
 
-  // Axios instance
-  const api = axios.create({
-    baseURL: "http://localhost:5000/api/users",
-    headers: {
-      Authorization: `Bearer ${getAuthToken()}`,
-    },
-  });
-
+  // Fetch user profile
   useEffect(() => {
     const fetchUserProfile = async () => {
+      const token = getAuthToken();
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
       try {
-        const response = await api.get("/profile");
-        const userData = response.data.data || {};
+        setLoading(true);
+        const response = await axios.get("http://localhost:5000/api/users/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const userData = response.data?.data ?? response.data;
 
         setFormData({
           name: userData.name || "",
@@ -87,38 +92,41 @@ export default function Profile() {
       } catch (err) {
         console.error("Error fetching profile:", err);
         if (err.response?.status === 401) {
-          setError("Authentication failed. Please login again.");
           localStorage.removeItem("token");
+          sessionStorage.removeItem("token");
           navigate("/login");
         } else {
           setError("Failed to load profile data. Please try again.");
+          setLoading(false);
         }
-        setLoading(false);
       }
     };
 
     fetchUserProfile();
-  }, [api, navigate]);
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleCheckboxChange = (section, key) => {
-    setFormData({
-      ...formData,
-      [section]: {
-        ...formData[section],
-        [key]: !formData[section][key],
-      },
-    });
+    setFormData((prev) => ({
+      ...prev,
+      [section]: { ...prev[section], [key]: !prev[section][key] },
+    }));
   };
 
   const handleSubmit = async () => {
     setSaving(true);
     setError("");
     setSuccess("");
+
+    const token = getAuthToken();
+    if (!token) {
+      navigate("/login");
+      return;
+    }
 
     try {
       const updateData = {
@@ -131,47 +139,43 @@ export default function Profile() {
         privacy: formData.privacy,
       };
 
-      const response = await api.put("/profile", updateData);
-      const updated = response.data?.data;
+      const response = await axios.put("http://localhost:5000/api/users/profile", updateData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const updatedUser = response.data?.data ?? response.data;
 
       setSuccess("Profile updated successfully!");
-      if (updated) {
-        setFormData((prev) => ({
-          ...prev,
-          name: updated.name ?? prev.name,
-          phone: updated.phone ?? prev.phone,
-          city: updated.city ?? prev.city,
-          address: updated.address ?? prev.address,
-          bio: updated.bio ?? prev.bio,
-          notifications: updated.notifications ?? prev.notifications,
-          privacy: updated.privacy ?? prev.privacy,
-        }));
-      }
-
+      if (updatedUser) setFormData((prev) => ({ ...prev, ...updatedUser }));
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       console.error("Error updating profile:", err);
       if (err.response?.status === 401) {
-        setError("Authentication failed. Please login again.");
         localStorage.removeItem("token");
-        navigate("/dashboard");
+        navigate("/login");
       } else {
-        setError(
-          err.response?.data?.message || "Failed to update profile. Please try again."
-        );
+        setError(err.response?.data?.message || "Failed to update profile. Please try again.");
       }
     } finally {
       setSaving(false);
     }
   };
 
-  // DELETE ACCOUNT
   const handleDeleteAccount = async () => {
     if (!window.confirm("Are you sure you want to permanently delete your account?")) return;
 
+    const token = getAuthToken();
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
     try {
-      await api.delete("/");
+      await axios.delete("http://localhost:5000/api/users/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
       alert("Account deleted successfully!");
       navigate("/login");
     } catch (err) {
@@ -180,10 +184,18 @@ export default function Profile() {
     }
   };
 
-  // EXPORT DATA
   const handleExportData = async () => {
+    const token = getAuthToken();
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
     try {
-      const response = await api.get("/export", { responseType: "blob" });
+      const response = await axios.get("http://localhost:5000/api/users/profile/export", {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -197,16 +209,15 @@ export default function Profile() {
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading profile...</p>
         </div>
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 px-6">
@@ -216,15 +227,12 @@ export default function Profile() {
           onClick={() => navigate("/dashboard")}
           className="flex items-center text-sm text-gray-600 gap-2 cursor-pointer hover:text-purple-600 transition"
         >
-          <FiArrowLeft className="text-gray-500" />
-          <span>Back to Dashboard</span>
-          <span className="text-gray-400">/</span>
-          <span className="font-semibold text-gray-700">Profile Settings</span>
+          <FiArrowLeft /> Back to Dashboard
         </div>
         <button
           onClick={handleSubmit}
           disabled={saving}
-          className={`px-4 py-2 text-white rounded-md shadow transition ${
+          className={`px-4 py-2 rounded-md shadow text-white transition ${
             saving ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
           }`}
         >
@@ -232,206 +240,103 @@ export default function Profile() {
         </button>
       </div>
 
-      {/* Error/Success Messages */}
-      {error && (
-        <div className="max-w-6xl mx-auto mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="max-w-6xl mx-auto mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
-          {success}
-        </div>
-      )}
+      {/* Error/Success */}
+      {error && <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">{error}</div>}
+      {success && <div className="mb-4 p-4 bg-green-100 text-green-700 rounded">{success}</div>}
 
-      {/* Main Layout */}
-      <div className="max-w-6xl mx-auto flex gap-6">
+      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
         {/* Sidebar */}
-        <div className="w-1/4 bg-white shadow rounded-2xl p-6 self-start">
-          <div className="flex flex-col items-center relative">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative">
-              {formData.name
-                ? formData.name
-                    .split(" ")
-                    .map((word) => word[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2)
-                : "U"}
-              <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow cursor-pointer">
-                <FiCamera className="text-gray-600 w-4 h-4" />
-              </div>
-            </div>
-            <h2 className="mt-4 font-semibold text-gray-800 text-lg">{formData.name}</h2>
-            <p className="text-sm text-gray-500">{formData.email}</p>
-            <span className="mt-2 px-3 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-md">
-              Active Member
-            </span>
+        <div className="w-full lg:w-1/4 bg-white shadow rounded-2xl p-6 flex flex-col items-center">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative">
+            {formData.name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2)}
+            <FiCamera className="absolute -bottom-1 -right-1 w-4 h-4 text-gray-600" />
           </div>
-
-          <div className="mt-6 space-y-2 text-sm text-gray-600">
-            <p className="flex items-center gap-2">
-              <FiMapPin className="text-gray-500" /> {formData.city}
-            </p>
-            <p className="flex items-center gap-2">
-              <FiShield className="text-gray-500" /> Verified Account
-            </p>
-          </div>
-
-          <hr className="my-6 border-gray-200" />
-
-          <div>
-            <h3 className="text-sm font-semibold text-gray-800">Community Stats</h3>
-            <div className="flex justify-around mt-4">
-              <div className="text-center">
-                <p className="text-purple-600 text-xl font-bold">6</p>
-                <p className="text-gray-500 text-sm">Reports</p>
-              </div>
-              <div className="text-center">
-                <p className="text-green-600 text-xl font-bold">2</p>
-                <p className="text-gray-500 text-sm">Resolved</p>
-              </div>
-            </div>
-          </div>
-
-          <hr className="my-6 border-gray-200" />
-
-          <div>
-            <h3 className="text-sm font-semibold text-gray-800">Report Types</h3>
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm hover:shadow-md cursor-pointer">
-                <FiFileText className="text-blue-500 text-xl" />
-                <span className="text-xs mt-2 font-medium">General</span>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm hover:shadow-md cursor-pointer">
-                <FiAlertTriangle className="text-red-500 text-xl" />
-                <span className="text-xs mt-2 font-medium">Potholes</span>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm hover:shadow-md cursor-pointer">
-                <FiZap className="text-yellow-500 text-xl" />
-                <span className="text-xs mt-2 font-medium">Lighting</span>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center shadow-sm hover:shadow-md cursor-pointer">
-                <FiDroplet className="text-blue-600 text-xl" />
-                <span className="text-xs mt-2 font-medium">Water</span>
-              </div>
-            </div>
-          </div>
+          <h2 className="mt-4 font-semibold text-gray-800 text-lg">{formData.name}</h2>
+          <p className="text-sm text-gray-500">{formData.email}</p>
+          <span className="mt-2 px-3 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-md">
+            Active Member
+          </span>
         </div>
 
         {/* Main Content */}
         <div className="flex-1 space-y-10">
           {/* Personal Info */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="flex items-center gap-2 font-semibold text-gray-800 text-lg">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="flex items-center gap-2 text-gray-800 font-semibold text-lg">
               <FiUser /> Personal Information
             </h3>
-            <div className="grid grid-cols-2 gap-8 mt-4">
-              {[
-                { name: "name", label: "Full Name", type: "text" },
-                { name: "email", label: "Email Address", type: "email", disabled: true },
-                { name: "phone", label: "Phone Number", type: "text" },
-                { name: "city", label: "City", type: "text" },
-              ].map(({ name, label, type, disabled }) => (
-                <div key={name}>
-                  <label className="block text-sm font-medium text-gray-600 text-left">{label}</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+              {["name", "email", "phone", "city"].map((field) => (
+                <div key={field}>
+                  <label className="block text-sm text-gray-600 mb-1">{field === "name" ? "Full Name" : field === "email" ? "Email" : field.charAt(0).toUpperCase() + field.slice(1)}</label>
                   <input
-                    type={type}
-                    name={name}
-                    value={formData[name]}
+                    type={field === "email" ? "email" : "text"}
+                    name={field}
+                    value={formData[field]}
+                    disabled={field === "email"}
                     onChange={handleChange}
-                    disabled={disabled}
-                    className={`w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-purple-500 ${
-                      disabled ? "bg-gray-200 cursor-not-allowed" : "bg-gray-100"
-                    }`}
+                    className={`w-full border rounded p-2 bg-gray-100 ${field === "email" ? "cursor-not-allowed" : ""}`}
                   />
                 </div>
               ))}
-
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-600 text-left">Address</label>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-600 mb-1">Address</label>
                 <input
                   type="text"
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
-                  className="w-full border rounded p-2 mt-1 bg-gray-100 focus:ring-2 focus:ring-purple-500"
+                  className="w-full border rounded p-2 bg-gray-100"
                 />
               </div>
-
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-600 text-left">Bio</label>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-600 mb-1">Bio</label>
                 <textarea
                   name="bio"
                   value={formData.bio}
                   onChange={handleChange}
-                  className="w-full border rounded p-2 mt-1 bg-gray-100 focus:ring-2 focus:ring-purple-500"
                   rows="3"
-                ></textarea>
+                  className="w-full border rounded p-2 bg-gray-100"
+                />
               </div>
             </div>
           </div>
 
-          {/* Notification Preferences */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="flex items-center gap-2 font-semibold text-gray-700 text-lg">
-              <FiBell className="text-purple-600" /> Notification Preferences
+        {/* Notifications & Privacy */}
+          <div className="bg-white p-6 rounded-lg shadow space-y-6">
+            <h3 className="flex items-center gap-2 font-semibold text-gray-800 text-lg">
+              <FiBell /> Notification Preferences
             </h3>
-            <div className="mt-4 space-y-6">
-              {[
-                {
-                  key: "emailUpdates",
-                  label: "Email Updates",
-                  description: "Receive important updates and announcements via email.",
-                },
-                {
-                  key: "smsAlerts",
-                  label: "SMS Alerts",
-                  description: "Get urgent alerts and notifications directly on your phone.",
-                },
-                {
-                  key: "pushNotifications",
-                  label: "Push Notifications",
-                  description: "Allow push notifications on your device for real-time updates.",
-                },
-                {
-                  key: "weeklyDigest",
-                  label: "Weekly Digest",
-                  description: "Get a weekly summary of activities and updates.",
-                },
-              ].map(({ key, label, description }) => (
-                <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50">
-                  <div className="text-left space-y-2">
-                    <p className="font-medium">{label}</p>
-                    <p className="text-sm text-gray-500">{description}</p>
-                  </div>
+            <div className="space-y-4">
+              {Object.entries(formData.notifications).map(([key, value]) => (
+                <div key={key} className="flex justify-between p-4 bg-gray-50 border rounded-md">
+                  <span className="capitalize">{key.replace(/([A-Z])/g, " $1")}</span>
                   <input
                     type="checkbox"
-                    checked={formData.notifications[key]}
+                    checked={value}
                     onChange={() => handleCheckboxChange("notifications", key)}
                   />
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Privacy & Security */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="flex items-center gap-2 font-semibold text-gray-700 text-lg">
-              <FiLock className="text-purple-600" /> Privacy & Security
+            <h3 className="flex items-center gap-2 font-semibold text-gray-800 text-lg mt-6">
+              <FiLock /> Privacy Settings
             </h3>
-            <div className="mt-4 space-y-5">
-              <div className="flex items-center justify-between p-4 border rounded-md bg-gray-50">
-                <div className="space-y-2">
-                  <p className="font-medium text-left">Profile Visibility</p>
-                  <p className="text-sm text-gray-500">Control who can see your profile information</p>
-                </div>
+            <div className="space-y-4">
+              <div className="flex justify-between p-4 bg-gray-50 border rounded-md">
+                <span>Profile Visibility</span>
                 <select
                   value={formData.privacy.visibility}
                   onChange={(e) =>
                     setFormData({ ...formData, privacy: { ...formData.privacy, visibility: e.target.value } })
                   }
-                  className="border rounded p-2 text-sm bg-gray-100 focus:ring-2 focus:ring-purple-500"
+                  className="border rounded p-1 bg-gray-100"
                 >
                   <option>Public</option>
                   <option>Private</option>
@@ -440,23 +345,8 @@ export default function Profile() {
               </div>
 
               {["showLocation", "showReports", "allowContact"].map((key) => (
-                <div key={key} className="flex items-center justify-between p-4 border rounded-md bg-gray-50 text-left">
-                  <div className="space-y-2">
-                    <p className="font-medium">
-                      {key === "showLocation"
-                        ? "Show Location"
-                        : key === "showReports"
-                        ? "Show Reports"
-                        : "Allow Contact"}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {key === "showLocation"
-                        ? "Display your general location to other users"
-                        : key === "showReports"
-                        ? "Allow others to see your public reports"
-                        : "Let community members contact you directly"}
-                    </p>
-                  </div>
+                <div key={key} className="flex justify-between p-4 bg-gray-50 border rounded-md">
+                  <span className="capitalize">{key.replace(/([A-Z])/g, " $1")}</span>
                   <input
                     type="checkbox"
                     checked={formData.privacy[key]}
@@ -468,30 +358,22 @@ export default function Profile() {
           </div>
 
           {/* Danger Zone */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="flex items-center gap-2 font-semibold text-red-600 text-lg">
+          <div className="bg-white p-6 rounded-lg shadow space-y-4">
+            <h3 className="flex items-center gap-2 text-red-600 font-semibold text-lg">
               <FiTrash2 /> Danger Zone
             </h3>
-            <div className="mt-4 space-y-5 text-left">
-              <div className="flex items-center justify-between p-4 border rounded-md bg-red-50">
-                <div className="space-y-2">
-                  <p className="font-medium text-red-700">Delete Account</p>
-                  <p className="text-sm text-red-500">Permanently delete your account and all associated data</p>
-                </div>
-                <button onClick={handleDeleteAccount} className="bg-red-600 text-white px-3 py-1 rounded">
-                  Delete Account
-                </button>
-              </div>
+            <div className="flex justify-between p-4 bg-red-50 border rounded-md">
+              <span>Delete Account</span>
+              <button onClick={handleDeleteAccount} className="px-3 py-1 bg-red-600 text-white rounded">
+                Delete
+              </button>
+            </div>
 
-              <div className="flex items-center justify-between p-4 border rounded-md bg-yellow-50">
-                <div>
-                  <p className="font-medium text-yellow-700">Export Data</p>
-                  <p className="text-sm text-yellow-600">Download a copy of all your data</p>
-                </div>
-                <button onClick={handleExportData} className="bg-yellow-500 text-white px-3 py-1 rounded">
-                  Export Data
-                </button>
-              </div>
+            <div className="flex justify-between p-4 bg-yellow-50 border rounded-md">
+              <span>Export Data</span>
+              <button onClick={handleExportData} className="px-3 py-1 bg-yellow-500 text-white rounded">
+                Export
+              </button>
             </div>
           </div>
         </div>

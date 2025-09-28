@@ -1,3 +1,5 @@
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FiFileText,
   FiCheckCircle,
@@ -9,8 +11,7 @@ import {
   FiFilter,
   FiRefreshCw,
 } from "react-icons/fi";
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+
 import Sidebar from "../components/Dashboard/DashSidebar";
 import Navbar from "../components/Dashboard/Navbar";
 import StatCard from "../components/Dashboard/StatCard";
@@ -18,25 +19,25 @@ import ReportCard from "../components/Dashboard/ReportCard";
 import DashFooter from "../components/Dashboard/DashFooter";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("My Reports");
   const [username, setUsername] = useState("User");
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const navigate = useNavigate();
 
-  const getAuthToken = () => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const getToken = () => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (token) return token;
 
-    const user = localStorage.getItem('user') || sessionStorage.getItem('user');
+    const user = localStorage.getItem("user") || sessionStorage.getItem("user");
     if (user) {
       try {
         const userData = JSON.parse(user);
         return userData.token;
-      } catch (error) {
-        console.error('Error parsing user data:', error);
+      } catch (err) {
+        console.error("Error parsing user:", err);
         return null;
       }
     }
@@ -44,29 +45,31 @@ export default function Dashboard() {
   };
 
   const fetchComplaints = useCallback(async () => {
-    const token = getAuthToken();
+    const token = getToken();
     if (!token) {
-      setError('Please login to view your complaints');
+      setError("Please login to view your complaints");
       setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
-      setError('');
-      const response = await fetch('http://localhost:5000/api/complaints/my', {
-        method: 'GET',
+      setError("");
+
+      const response = await fetch("http://localhost:5000/api/complaints/my", {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
+
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
       const data = await response.json();
       setComplaints(data.data || []);
-    } catch (error) {
-      console.error('Error fetching complaints:', error);
-      setError('Failed to load your complaints. Please try again.');
+    } catch (err) {
+      console.error("Error fetching complaints:", err);
+      setError("Failed to load your complaints. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -74,12 +77,17 @@ export default function Dashboard() {
 
   const stats = {
     totalReports: complaints.length,
-    pending: complaints.filter(c => c.status === 'Received' || c.status === 'In Review').length,
-    inProgress: complaints.filter(c => c.status === 'In Progress').length,
-    resolved: complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length,
-    completionRate: complaints.length > 0
-      ? Math.round((complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length / complaints.length) * 100)
-      : 0
+    pending: complaints.filter((c) => c.status === "Received" || c.status === "In Review").length,
+    inProgress: complaints.filter((c) => c.status === "In Progress").length,
+    resolved: complaints.filter((c) => c.status === "Resolved" || c.status === "Closed").length,
+    completionRate:
+      complaints.length > 0
+        ? Math.round(
+            (complaints.filter((c) => c.status === "Resolved" || c.status === "Closed").length /
+              complaints.length) *
+              100
+          )
+        : 0,
   };
 
   useEffect(() => {
@@ -93,11 +101,10 @@ export default function Dashboard() {
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
+      {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Navbar */}
         <Navbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
-        {/* Main content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-8">
           {/* Welcome Section */}
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 md:gap-0">
@@ -110,19 +117,22 @@ export default function Dashboard() {
                 Downtown • Civic Engagement Dashboard
               </p>
             </div>
+
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={fetchComplaints}
                 disabled={loading}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100 transition disabled:opacity-50"
               >
-                <FiRefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                <FiRefreshCw size={16} className={loading ? "animate-spin" : ""} />
                 Refresh
               </button>
+
               <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100 transition">
                 <FiFilter size={16} />
                 Filter
               </button>
+
               <button
                 onClick={() => navigate("/reportissue")}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 text-white text-sm font-medium shadow-md hover:opacity-90 transition"
@@ -134,10 +144,34 @@ export default function Dashboard() {
 
           {/* Top Stat Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard title="My Reports" value={stats.totalReports.toString()} subtitle={`${stats.pending} pending`} color="from-purple-500 to-purple-600" icon={<FiFileText size={24} />} />
-            <StatCard title="Resolved" value={stats.resolved.toString()} subtitle={`${stats.completionRate}% completion`} color="from-green-500 to-green-600" icon={<FiCheckCircle size={24} />} />
-            <StatCard title="In Progress" value={stats.inProgress.toString()} subtitle="Being addressed" color="from-orange-500 to-orange-600" icon={<FiClock size={24} />} />
-            <StatCard title="Community Score" value="8.7" subtitle="+0.3 this month" color="from-pink-500 to-purple-500" icon={<FiUsers size={24} />} />
+            <StatCard
+              title="My Reports"
+              value={stats.totalReports.toString()}
+              subtitle={`${stats.pending} pending`}
+              color="from-purple-500 to-purple-600"
+              icon={<FiFileText size={24} />}
+            />
+            <StatCard
+              title="Resolved"
+              value={stats.resolved.toString()}
+              subtitle={`${stats.completionRate}% completion`}
+              color="from-green-500 to-green-600"
+              icon={<FiCheckCircle size={24} />}
+            />
+            <StatCard
+              title="In Progress"
+              value={stats.inProgress.toString()}
+              subtitle="Being addressed"
+              color="from-orange-500 to-orange-600"
+              icon={<FiClock size={24} />}
+            />
+            <StatCard
+              title="Community Score"
+              value="8.7"
+              subtitle="+0.3 this month"
+              color="from-pink-500 to-purple-500"
+              icon={<FiUsers size={24} />}
+            />
           </div>
 
           {/* Tabs */}
@@ -165,9 +199,13 @@ export default function Dashboard() {
               </p>
               <h2 className="text-2xl font-bold">{stats.completionRate}%</h2>
               <div className="w-full bg-gray-200 h-2 rounded mt-2">
-                <div className="h-2 rounded bg-purple-600" style={{ width: `${stats.completionRate}%` }}></div>
+                <div
+                  className="h-2 rounded bg-purple-600"
+                  style={{ width: `${stats.completionRate}%` }}
+                ></div>
               </div>
             </div>
+
             <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
               <p className="text-green-600 font-medium flex items-center gap-2">
                 <FiCalendar /> This Month
@@ -175,6 +213,7 @@ export default function Dashboard() {
               <h2 className="text-2xl font-bold">{stats.totalReports}</h2>
               <p className="text-gray-500 text-sm">Your reports</p>
             </div>
+
             <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
               <p className="text-purple-600 font-medium flex items-center gap-2">
                 <FiUsers /> Active Status
@@ -194,43 +233,19 @@ export default function Dashboard() {
           {loading ? (
             <div className="flex justify-center items-center py-12">
               <div className="flex items-center gap-2 text-gray-500">
-                <FiRefreshCw className="animate-spin" size={20} />
-                Loading complaints...
+                <FiRefreshCw className="animate-spin" size={20} /> Loading reports...
               </div>
             </div>
+          ) : complaints.length === 0 ? (
+            <p className="text-gray-500">You have not submitted any reports yet.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {complaints.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <FiFileText className="mx-auto text-gray-400 mb-4" size={48} />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No reports yet</h3>
-                  <p className="text-gray-500 mb-4">Get started by reporting your first civic issue.</p>
-                  <button
-                    onClick={() => navigate("/reportissue")}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition"
-                  >
-                    Report an Issue
-                  </button>
-                </div>
-              ) : (
-                complaints.map((complaint) => (
-                  <ReportCard
-                    key={complaint._id}
-                    title={complaint.title}
-                    location={complaint.location}
-                    status={complaint.status}
-                    priority={complaint.priority}
-                    submitted={new Date(complaint.submittedAt).toLocaleDateString()}
-                    assignedTo={complaint.assignedTo?.name || 'Unassigned'}
-                    category={complaint.category}
-                    description={complaint.description}
-                  />
-                ))
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {complaints.map((c) => (
+                <ReportCard key={c._id} complaint={c} />
+              ))}
             </div>
           )}
 
-          {/* Footer */}
           <DashFooter />
         </main>
       </div>

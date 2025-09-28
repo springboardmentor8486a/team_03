@@ -1,7 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "../../assets/urbanalive.jpg";
+import "../../styles/forgotpassword.css";
+import logo from "../../assets/urbanalive.jpg"; 
 
 export default function ForgotPlaceholder() {
   const navigate = useNavigate();
@@ -10,98 +11,123 @@ export default function ForgotPlaceholder() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const validateEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).toLowerCase());
+  const validateEmail = (v) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).toLowerCase());
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setMessage("");
 
-    if (!validateEmail(email)) return setError("Please enter a valid email address.");
-
-    setLoading(true);
-    try {
-      // Replace with your actual backend endpoint
-      const response = await axios.post("http://localhost:5000/api/users/forgot-password", { email });
-      setLoading(false);
-      setMessage(response.data?.message || `A verification code was sent to ${email}.`);
-      sessionStorage.setItem("forgot_email", email);
-      navigate("/login/verify");
-    } catch (err) {
-      setLoading(false);
-      setError(
-        err.response?.data?.message || "Failed to send verification code. Please try again."
-      );
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address.");
+      return;
     }
-  };
+setLoading(true);
+
+try {
+  // 🔹 Call your backend to send OTP
+const response = await fetch("http://localhost:5000/api/users/forgot-password", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email }),
+});
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    setError(data.message || "Failed to send verification code.");
+    setLoading(false);
+    return;
+  }
+
+  // ✅ Success
+  setMessage(`A verification code was sent to ${email}. Check your inbox.`);
+
+  sessionStorage.setItem("forgot_email", email);
+
+  // (Optional) if backend returns a requestId / resetToken, store it
+  if (data.requestId) {
+    sessionStorage.setItem("request_id", data.requestId);
+  }
+
+  // Redirect to verify page
+  setTimeout(() => navigate("/login/verify"), 1000);
+
+} catch {
+  setError("Network error, please try again.");
+  } finally {
+    setLoading(false);
+  }
+}
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      {/* LEFT purple panel */}
-      <div className="flex-1 md:flex-[1.05] bg-gradient-to-b from-[#6e21f2] via-[#b81fe7] to-[#8421b7] text-white p-12 flex items-center">
-        <div className="max-w-xl w-full">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-14 h-14 rounded-lg bg-white/10 flex items-center justify-center">
-              <img src={logo} alt="logo" className="w-10 h-10 object-contain" />
+    <div className="forgot-container">
+      {/* LEFT */}
+      <div className="forgot-left">
+        <div className="left-inner">
+          <div className="brand-row">
+            <div className="brand-logo">
+              <img src={logo} alt="logo" />
             </div>
-            <div>
-              <div className="font-bold text-lg">UrbanAlive</div>
-              <div className="text-[13px] opacity-95 -mt-1">Your Community Platform</div>
+            <div className="brand-text">
+              <div className="brand-title">UrbanAlive</div>
+              <div className="brand-sub">Civic Engagement Platform</div>
             </div>
           </div>
-          <h1 className="text-4xl font-semibold leading-tight mb-4">Reset Your Password</h1>
-          <p className="text-sm max-w-md opacity-90 leading-relaxed">
-            Enter your email and we'll send you a code to reset your password.
+
+          <h1 className="forgot-heading">Reset Your Password</h1>
+
+          <p className="forgot-desc">
+            Don't worry, it happens to the best of us. Enter your email address and
+            we'll send you a code to reset your password.
           </p>
         </div>
       </div>
 
-      {/* RIGHT white form */}
-      <div className="flex-1 md:flex-[0.7] bg-white flex items-center justify-center p-14">
-        <div className="w-full max-w-md">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-gray-700 text-sm mb-2 hover:underline"
-          >
-            ← Back to Login
-          </button>
+      {/* RIGHT */}
+      <div className="forgot-right">
+        <div className="forgot-card">
+          <div className="back-row">
+            <button className="back-btn" onClick={() => navigate(-1)}>
+              ← Back to Login
+            </button>
+          </div>
 
-          <h2 className="text-2xl font-bold mb-2">Forgot Password?</h2>
-          <p className="text-gray-600 mb-4">
-            Enter your email to receive a verification code.
-          </p>
+          <h2 className="forgot-title">Forgot Password?</h2>
+          <p className="forgot-sub">Enter your email address and we'll send you a verification code</p>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="flex flex-col">
-              <label className="font-semibold text-sm mb-1">Email</label>
+          <form className="forgot-form" onSubmit={handleSubmit}>
+            <label className="label">Email Address</label>
+            <div className="input-with-icon">
+              <span className="input-icon">✉️</span>
               <input
                 type="email"
+                placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                required
               />
             </div>
 
-            {error && <div className="text-red-600">{error}</div>}
-            {message && <div className="text-green-700">{message}</div>}
+            {error && <div className="form-error">{error}</div>}
+            {message && <div className="form-success">{message}</div>}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-lg bg-gradient-to-r from-[#8e2df1] to-[#2ad29f] text-white font-bold disabled:opacity-70 disabled:cursor-not-allowed"
-            >
+            <button className="send-btn" type="submit" disabled={loading}>
               {loading ? "Sending..." : "Send Verification Code"}
             </button>
           </form>
 
-          <div className="mt-4 text-sm text-gray-600">
-            Remember your password?{" "}
-            <Link to="/login/" className="text-purple-600 font-bold">
-              Sign In →
-            </Link>
+          <div className="signin-line">
+            Remember your password? <Link to="/">Sign In →</Link>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+
+
+
+
