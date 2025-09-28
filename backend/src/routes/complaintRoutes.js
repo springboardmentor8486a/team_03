@@ -14,10 +14,12 @@ const router = express.Router();
 // Apply authentication to all routes
 router.use(verifyToken);
 
+import upload from "../middlewares/uploadMiddleware.js";
+
 // Routes  
 router.route("/")
   .get(getAllComplaints)           // GET /api/complaints
-  .post(createComplaint);          // POST /api/complaints
+  .post(upload.single("photo"), createComplaint); // POST /api/complaints with photo upload
 
 router.get("/my", getMyComplaints);  // GET /api/complaints/my
 

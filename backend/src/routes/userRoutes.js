@@ -11,6 +11,7 @@ import {
   testEmail,
 } from "../controllers/userController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
+import upload from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -24,6 +25,6 @@ router.post("/test-email", testEmail);
 
 // Protected routes
 router.get("/profile", verifyToken, getUserProfile);
-router.put("/profile", verifyToken, updateUserProfile);
+router.put("/profile", verifyToken, upload.single("photo"), updateUserProfile);
 
 export { router as userRoutes };

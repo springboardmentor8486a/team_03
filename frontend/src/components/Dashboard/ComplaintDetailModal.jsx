@@ -124,33 +124,28 @@ const ComplaintDetailModal = ({ isOpen, onClose, complaintId, onUpdate }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                   <p className="text-lg font-semibold text-gray-900">{complaint.title}</p>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
                   <p className="text-sm font-mono text-gray-600">{complaint._id}</p>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                     {complaint.category}
                   </span>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(complaint.priority)}`}>
                     {complaint.priority}
                   </span>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(complaint.status)}`}>
                     {complaint.status}
                   </span>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Days Since Submission</label>
                   <p className="text-lg font-medium text-gray-900">
@@ -158,6 +153,18 @@ const ComplaintDetailModal = ({ isOpen, onClose, complaintId, onUpdate }) => {
                   </p>
                 </div>
               </div>
+
+              {/* Uploaded Photo */}
+              {complaint.photo && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+                  <img
+                    src={`http://localhost:5000/uploads/${complaint.photo}`}
+                    alt="Complaint Photo"
+                    className="max-w-xs rounded shadow border"
+                  />
+                </div>
+              )}
 
               {/* Location */}
               <div>

@@ -49,10 +49,11 @@ const userSchema = new mongoose.Schema(
     otpExpiry: { type: Date },  // Expiry time for OTP
     isOtpVerified: { type: Boolean, default: false },
     
-    // Profile Information
-    city: { type: String, trim: true },
-    address: { type: String, trim: true },
-    bio: { type: String, trim: true, maxlength: 500 },
+  // Profile Information
+  city: { type: String, trim: true },
+  address: { type: String, trim: true },
+  bio: { type: String, trim: true, maxlength: 500 },
+  photo: { type: String, default: null },
     
     // Notification Preferences
     notifications: {

@@ -37,6 +37,10 @@ const complaintSchema = new mongoose.Schema(
       enum: ["Received", "In Review", "In Progress", "Resolved", "Closed"],
       default: "Received"
     },
+    photo: {
+      type: String,
+      default: null
+    },
     submittedAt: {
       type: Date,
       default: Date.now
