@@ -1,6 +1,8 @@
 import { FiMapPin, FiEye, FiEdit } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
 export default function ReportCard({ complaint }) {
+  const navigate = useNavigate();
   const {
     title,
     category,
@@ -25,6 +27,11 @@ export default function ReportCard({ complaint }) {
       Medium: "text-yellow-600",
       Low: "text-green-600",
     };
+
+    const handleViewDetails = () => {
+      navigate("/view-details", { state: complaint });
+    }
+
 
     return (
       <div className="bg-white p-6 rounded-xl shadow-md border hover:shadow-lg transition-shadow duration-200">
@@ -71,7 +78,8 @@ export default function ReportCard({ complaint }) {
 
         {/* Action Buttons */}
         <div className="mt-5 flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 text-sm border rounded-md hover:bg-gray-100 transition">
+          <button className="flex items-center gap-2 px-4 py-2 text-sm border rounded-md hover:bg-gray-100 transition"
+           onClick={handleViewDetails}>
             <FiEye /> View Details
           </button>
           <button className="flex items-center gap-2 px-4 py-2 text-sm border rounded-md hover:bg-gray-100 transition">
