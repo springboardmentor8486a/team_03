@@ -8,6 +8,8 @@ import {
   FiLoader,
 } from "react-icons/fi";
 
+import LocationMap from "./LocationMap";
+
 export default function ReportIssue() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,12 +25,19 @@ export default function ReportIssue() {
     photos: [],
   });
 
+  const [showMap, setShowMap] = useState(false);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    
+
     // Clear errors when user starts typing
     if (error) setError('');
+  };
+
+  const handleLocationChange = (coords) => {
+    setFormData((prev) => ({ ...prev, location: coords.join(",") }));
+    setShowMap(false);
   };
 
   const handleFileChange = (e) => {
@@ -278,10 +287,27 @@ export default function ReportIssue() {
               />
               <button
                 type="button"
-                className="border rounded-r p-2 mt-1 bg-gray-100 hover:bg-gray-200"
+                className="border rounded-r p-2 mt-1 bg-gray-100 hover:bg-gray-200 flex items-center"
+                onClick={() => setShowMap(true)}
+                title="Pick location from map"
               >
                 <FiMapPin className="text-gray-600" />
               </button>
+              {showMap && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-lg p-6 relative w-full max-w-xl">
+                    <button
+                      className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl"
+                      onClick={() => setShowMap(false)}
+                    >
+                      &times;
+                    </button>
+                    <h3 className="mb-4 text-lg font-semibold text-gray-800">Select Location</h3>
+                    <LocationMap onLocationChange={handleLocationChange} />
+                    <p className="mt-4 text-sm text-gray-500">Click on the map to select a location. Coordinates will be filled automatically.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
