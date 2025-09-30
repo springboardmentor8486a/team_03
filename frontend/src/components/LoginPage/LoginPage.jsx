@@ -27,20 +27,21 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // 🧹 Clear any previous session/user data before new login
+      //  Clear any previous session/user data before new login
       localStorage.clear();
       sessionStorage.clear();
 
-      // 🔑 API request to login
+      //  API request to login
       const res = await axios.post("http://localhost:5000/api/users/login", {
         email,
         password,
       });
 
-      // ✅ Expecting backend to return { token, user }
-      const { token, user } = res.data;
+      // Use backend response: all fields at top level
+      const user = res.data;
+      const token = user.token;
 
-      // 📦 Store the new session securely
+      //  Store the new session securely
       if (remember) {
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
@@ -49,9 +50,15 @@ export default function LoginPage() {
         sessionStorage.setItem("user", JSON.stringify(user));
       }
 
-      // 🚀 Redirect to dashboard
       setLoading(false);
-      navigate("/dashboard");
+      // dashboard routing
+      if (user.role === "admin") {
+        setError("");
+        navigate("/admin-dashboard");
+      } else {
+        setError("");
+        navigate("/dashboard");
+      }
     } catch (err) {
       console.error(err);
       setLoading(false);

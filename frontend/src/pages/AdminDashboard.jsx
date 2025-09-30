@@ -14,7 +14,14 @@ import AdminReportCard from "../components/AdminDashboard/AdminReportCard";
 import AdminFooter from "../components/AdminDashboard/AdminFooter";
 
 export default function AdminDashboard() {
-//   const navigate = useNavigate();
+  const navigate = useNavigate();
+  useEffect(() => {
+    // Check user role from localStorage/sessionStorage
+    const user = JSON.parse(localStorage.getItem("user")) || JSON.parse(sessionStorage.getItem("user"));
+    if (!user || user.role !== "admin") {
+      navigate("/login");
+    }
+  }, [navigate]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
