@@ -4,7 +4,7 @@ import LoginForm from "./pages/LoginForm";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./components/Dashboard/Profile"; 
 import ReportIssue from "./components/Dashboard/ReportIssue";
-import ViewDetails from "./components/Dashboard/ViewDetails";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
@@ -13,9 +13,9 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login/*" element={<LoginForm />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/admindashboard" element={<AdminDashboard/>}/>
         <Route path="/profile" element={<Profile />} /> {/* ✅ add route */}
         <Route path="/reportissue" element={<ReportIssue />} /> {/* ✅ add report issue route */}
-        <Route path="/view-details" element={<ViewDetails />} /> {/* ✅ add view details route */}
       </Routes>
     </BrowserRouter>
   );
