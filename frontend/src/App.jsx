@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./components/Dashboard/Profile"; 
 import ReportIssue from "./components/Dashboard/ReportIssue";
 import AdminDashboard from "./pages/AdminDashboard";
+import ViewDetails from "./components/Dashboard/ViewDetails";
 
 function App() {
   return (
@@ -15,7 +16,9 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/admindashboard" element={<AdminDashboard/>}/>
         <Route path="/profile" element={<Profile />} /> {/* ✅ add route */}
+        <Route path="/view-details" element={<ViewDetails />} /> {/* ✅ add view details route */}
         <Route path="/reportissue" element={<ReportIssue />} /> {/* ✅ add report issue route */}
+        
       </Routes>
     </BrowserRouter>
   );
