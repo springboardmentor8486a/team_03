@@ -60,10 +60,9 @@ export default function ViewDetails() {
               <FiTag /> {complaint.category}
             </span>
             <span
-              className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 ${
-                priorityColors[complaint.priority] ||
+              className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 ${priorityColors[complaint.priority] ||
                 "bg-gray-100 text-gray-700"
-              }`}
+                }`}
             >
               <FiFlag /> {complaint.priority}
             </span>
@@ -105,7 +104,7 @@ export default function ViewDetails() {
                 {complaint.photos.map((photo, idx) => (
                   <img
                     key={idx}
-                    src={photo}
+                    src={`http://localhost:5000/uploads/${photo}`}
                     alt={`complaint-photo-${idx}`}
                     className="rounded-lg object-cover w-full h-40 border border-gray-200 hover:shadow-md transition"
                   />
@@ -113,6 +112,7 @@ export default function ViewDetails() {
               </div>
             </div>
           )}
+
         </div>
 
         {/* RIGHT: Details + Actions */}

@@ -12,6 +12,8 @@ export default function ReportCard({ complaint }) {
     description,
     submitted,
     assignedTo,
+    // eslint-disable-next-line no-unused-vars
+    photo
   } = complaint;
   {
     const statusColors = {
@@ -29,7 +31,7 @@ export default function ReportCard({ complaint }) {
     };
 
     const handleViewDetails = () => {
-      navigate("/view-details", { state: complaint });
+      navigate("/view-details", { state: { ...complaint, photos: [complaint.photo] } });
     }
 
 
@@ -68,6 +70,13 @@ export default function ReportCard({ complaint }) {
         {/* Description */}
         <p className="mt-10 text-gray-700 text-sm leading-relaxed text-left">{description}</p>
 
+        {/* <img
+          src={`http://localhost:5000/uploads/${photo}`}
+          alt="Complaint photo"
+          className="mt-4 rounded-md shadow-md max-h-64 object-cover"
+        /> */}
+
+
         {/* Footer */}
         <div className="mt-10 flex flex-col gap-1 text-xs text-gray-500 text-left">
           <span>Submitted: {submitted || 'N/A'}</span>
@@ -79,7 +88,7 @@ export default function ReportCard({ complaint }) {
         {/* Action Buttons */}
         <div className="mt-5 flex gap-3">
           <button className="flex items-center gap-2 px-4 py-2 text-sm border rounded-md hover:bg-gray-100 transition"
-           onClick={handleViewDetails}>
+            onClick={handleViewDetails}>
             <FiEye /> View Details
           </button>
           <button className="flex items-center gap-2 px-4 py-2 text-sm border rounded-md hover:bg-gray-100 transition">
