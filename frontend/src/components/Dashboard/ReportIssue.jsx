@@ -5,10 +5,16 @@ import {
   FiMapPin,
   FiUploadCloud,
   FiCamera,
+  FiLoader,
 } from "react-icons/fi";
+
+import LocationMap from "./LocationMap";
 
 export default function ReportIssue() {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const [formData, setFormData] = useState({
     category: "",
@@ -19,9 +25,19 @@ export default function ReportIssue() {
     photos: [],
   });
 
+  const [showMap, setShowMap] = useState(false);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    // Clear errors when user starts typing
+    if (error) setError('');
+  };
+
+  const handleLocationChange = (coords) => {
+    setFormData((prev) => ({ ...prev, location: coords.join(",") }));
+    setShowMap(false);
   };
 
   const handleFileChange = (e) => {
@@ -31,9 +47,129 @@ export default function ReportIssue() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const getAuthToken = () => {
+    // Try to get token directly first (stored by login)
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (token) {
+      return token;
+    }
+    
+    // Fallback: try to get from user object (legacy)
+    const user = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        return userData.token;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const validateForm = () => {
+    const { title, category, location, description, priority } = formData;
+    
+    if (!category) {
+      setError('Issue Category is required');
+      return false;
+    }
+    if (!title.trim()) {
+      setError('Issue Title is required');
+      return false;
+    }
+    if (!description.trim()) {
+      setError('Description is required');
+      return false;
+    }
+    if (!location.trim()) {
+      setError('Location is required');
+      return false;
+    }
+    if (!priority) {
+      setError('Priority Level is required');
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Submitted:", formData);
+
+    
+    if (!validateForm()) {
+
+      return;
+    }
+
+    const token = getAuthToken();
+    console.log('Auth token check:', {
+      hasToken: !!token,
+      tokenSource: localStorage.getItem('token') ? 'localStorage' : sessionStorage.getItem('token') ? 'sessionStorage' : 'none'
+    });
+    
+    if (!token) {
+      setError('Authentication required. Please log in again.');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      // Prepare FormData for multipart/form-data
+      const formDataToSend = new FormData();
+      formDataToSend.append("title", formData.title);
+      formDataToSend.append("category", formData.category);
+      formDataToSend.append("priority", formData.priority);
+      formDataToSend.append("location", formData.location);
+      formDataToSend.append("description", formData.description);
+      // Only send first photo (backend expects single file)
+      if (formData.photos && formData.photos.length > 0) {
+        formDataToSend.append("photo", formData.photos[0]);
+      }
+
+      const response = await fetch('http://localhost:5000/api/complaints', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formDataToSend
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      }
+
+      if (data.success) {
+        setSuccess('Report submitted successfully!');
+        // Reset form
+        setFormData({
+          category: "",
+          title: "",
+          description: "",
+          location: "",
+          priority: "",
+          photos: [],
+        });
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      } else {
+        setError(data.message || 'Failed to submit report');
+      }
+    } catch (error) {
+      console.error('Error submitting complaint:', error);
+      setError(error.message || 'Failed to submit report. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -42,7 +178,7 @@ export default function ReportIssue() {
       <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6">
         <div className="max-w-4xl mx-auto flex items-center gap-4">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/dashboard")}
             className="flex items-center gap-2 bg-purple-800 hover:bg-purple-900 px-3 py-1 rounded-md shadow"
           >
             <FiArrowLeft /> Back to Dashboard
@@ -55,6 +191,20 @@ export default function ReportIssue() {
           </div>
         </div>
       </div>
+
+      {/* Success Message */}
+      {success && (
+        <div className="max-w-3xl mx-auto mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
+          <p className="text-green-800 text-center font-medium">{success}</p>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="max-w-3xl mx-auto mt-6 p-4 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-red-800 text-center">{error}</p>
+        </div>
+      )}
 
       {/* Form Section */}
       <div className="max-w-3xl mx-auto mt-8 bg-white shadow rounded-lg p-8">
@@ -76,12 +226,15 @@ export default function ReportIssue() {
               value={formData.category}
               onChange={handleChange}
               className="w-full border rounded p-2 mt-1 bg-gray-100 focus:ring-2 focus:ring-purple-500"
+              required
             >
               <option value="">Select an issue category</option>
-              <option>Potholes</option>
-              <option>Lighting</option>
-              <option>Water</option>
-              <option>General</option>
+              <option>Infrastructure</option>
+              <option>Roads</option>
+              <option>Public Safety</option>
+              <option>Environment</option>
+              <option>Public Transport</option>
+              <option>Other</option>
             </select>
           </div>
 
@@ -97,6 +250,7 @@ export default function ReportIssue() {
               onChange={handleChange}
               placeholder="Brief summary of the issue"
               className="w-full border rounded p-2 mt-1 bg-gray-100 focus:ring-2 focus:ring-purple-500"
+              required
             />
           </div>
 
@@ -112,6 +266,7 @@ export default function ReportIssue() {
               placeholder="Provide detailed information about the issue, including when you noticed it and any relevant details..."
               rows="3"
               className="w-full border rounded p-2 mt-1 bg-gray-100 focus:ring-2 focus:ring-purple-500"
+              required
             ></textarea>
           </div>
 
@@ -128,13 +283,31 @@ export default function ReportIssue() {
                 onChange={handleChange}
                 placeholder="Enter address or coordinates"
                 className="w-full border rounded-l p-2 mt-1 bg-gray-100 focus:ring-2 focus:ring-purple-500"
+                required
               />
               <button
                 type="button"
-                className="border rounded-r p-2 mt-1 bg-gray-100 hover:bg-gray-200"
+                className="border rounded-r p-2 mt-1 bg-gray-100 hover:bg-gray-200 flex items-center"
+                onClick={() => setShowMap(true)}
+                title="Pick location from map"
               >
                 <FiMapPin className="text-gray-600" />
               </button>
+              {showMap && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-lg p-6 relative w-full max-w-xl">
+                    <button
+                      className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl"
+                      onClick={() => setShowMap(false)}
+                    >
+                      &times;
+                    </button>
+                    <h3 className="mb-4 text-lg font-semibold text-gray-800">Select Location</h3>
+                    <LocationMap onLocationChange={handleLocationChange} />
+                    <p className="mt-4 text-sm text-gray-500">Click on the map to select a location. Coordinates will be filled automatically.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -148,6 +321,7 @@ export default function ReportIssue() {
               value={formData.priority}
               onChange={handleChange}
               className="w-full border rounded p-2 mt-1 bg-gray-100 focus:ring-2 focus:ring-purple-500"
+              required
             >
               <option value="">Select priority level</option>
               <option>Low</option>
@@ -179,6 +353,14 @@ export default function ReportIssue() {
               <p className="text-xs text-gray-400 mt-1">
                 Maximum 5 photos, up to 10MB each
               </p>
+              {/* Photo Preview */}
+              {formData.photos[0] && (
+                <img
+                  src={URL.createObjectURL(formData.photos[0])}
+                  alt="Preview"
+                  style={{ maxWidth: 200, marginTop: 10, borderRadius: 8, boxShadow: '0 2px 8px #ccc' }}
+                />
+              )}
             </div>
           </div>
 
@@ -186,16 +368,25 @@ export default function ReportIssue() {
           <div className="flex justify-end gap-4">
             <button
               type="button"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/dashboard")}
               className="px-4 py-2 border rounded-md shadow hover:bg-gray-100"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-md shadow hover:from-purple-700 hover:to-purple-800"
+              disabled={isSubmitting}
+              className="px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-md shadow hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Submit Report
+              {isSubmitting ? (
+                <>
+                  <FiLoader className="animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Report'
+              )}
             </button>
           </div>
         </form>

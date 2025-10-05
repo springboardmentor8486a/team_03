@@ -1,11 +1,17 @@
-import React from 'react'
+import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const Signbtn = () => {
-  return (
-    <div>
-        <a href="" className=' px-6 py-2  rounded hover:bg-gray-200 text-black'>Sign In</a>
-    </div>
-  )
-}
+  const navigate = useNavigate();
 
-export default Signbtn
+  return (
+    <button
+      onClick={() => navigate("/login")}
+      className="px-6 py-2 rounded hover:bg-gray-200 text-black transition"
+    >
+      Sign In
+    </button>
+  );
+};
+
+export default Signbtn;
