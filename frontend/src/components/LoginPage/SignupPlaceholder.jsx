@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../styles/signuppage.css";
-import logo from "../../assets/urbanalive.jpg"; 
+import logo from "../../assets/urbanalive.jpg";
 
 export default function SignupPlaceholder() {
   const navigate = useNavigate();
@@ -37,17 +37,39 @@ export default function SignupPlaceholder() {
 
     setLoading(true);
 
-    setTimeout(() => {
-      const fakeToken = "fake-jwt-token-signup";
-      const user = { name: fullName, email, phone };
+    try {
+      const response = await fetch("http://localhost:5000/api/users/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: fullName,
+          email,
+          phone,
+          password,
+        }),
+      });
 
-      localStorage.setItem("token", fakeToken);
-      localStorage.setItem("user", JSON.stringify(user));
+      const data = await response.json();
 
+      if (response.ok) {
+        // Registration successful
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        setLoading(false);
+        setSuccess("Account created successfully! Redirecting...");
+        setTimeout(() => navigate("/login"), 900);
+      } else {
+        // Registration failed
+        setLoading(false);
+        setError(data.message || "Registration failed");
+      }
+    } catch (error) {
       setLoading(false);
-      setSuccess("Account created successfully! Redirecting...");
-      setTimeout(() => navigate("/dashboard"), 900);
-    }, 1000);
+      setError("Network error. Please try again.");
+    }
   };
 
   return (
@@ -169,5 +191,3 @@ export default function SignupPlaceholder() {
     </div>
   );
 }
-
-

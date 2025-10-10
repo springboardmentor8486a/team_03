@@ -21,7 +21,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // Role to 'admin' if email ends with '@cleanstreet.in', else 'user'
+  // Role to 'admin' if email ends with '@cleanstreet.in'then it will go to 'user'
   const role = email.endsWith('@cleanstreet.in') ? 'admin' : 'user';
   const user = await User.create({
     name,
