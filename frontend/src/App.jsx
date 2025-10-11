@@ -6,6 +6,7 @@ import Profile from "./components/Dashboard/Profile";
 import ReportIssue from "./components/Dashboard/ReportIssue";
 import AdminDashboard from "./pages/AdminDashboard";
 import ViewDetails from "./components/Dashboard/ViewDetails";
+import WorkProgressDashboard from "./pages/WorkProgressDashboard";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/profile" element={<Profile />} /> {/* ✅ add route */}
         <Route path="/view-details" element={<ViewDetails />} /> {/* ✅ add view details route */}
         <Route path="/reportissue" element={<ReportIssue />} /> {/* ✅ add report issue route */}
+        <Route path="/work-progress" element={<WorkProgressDashboard />} />
         
       </Routes>
     </BrowserRouter>
