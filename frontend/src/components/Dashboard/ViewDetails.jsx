@@ -11,6 +11,7 @@ import {
   FiEdit3,
   FiMessageCircle,
   FiThumbsUp,
+  FiThumbsDown,
   FiPhoneCall,
   FiCamera,
   FiChevronRight,
@@ -52,7 +53,9 @@ export default function ViewDetails() {
 
   const complaint = location.state || mockComplaint;
 
-  const [votes, setVotes] = useState(complaint.votes || 0);
+  const [upvotes, setUpvotes] = useState(complaint.votes || 0);
+  const [downvotes, setDownvotes] = useState(0);
+  const [photos, setPhotos] = useState(complaint.photos || []);
   const [comments, setComments] = useState(complaint.comments || []);
   const [newComment, setNewComment] = useState("");
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -81,8 +84,12 @@ export default function ViewDetails() {
     }
   };
 
-  const handleVote = () => {
-    setVotes(votes + 1);
+  const handleUpvote = () => {
+    setUpvotes(upvotes + 1);
+  };
+
+  const handleDownvote = () => {
+    setDownvotes(downvotes + 1);
   };
 
   const handleAddComment = (e) => {
@@ -113,6 +120,9 @@ export default function ViewDetails() {
       let updateText = `Update submitted - Type: ${updateType || 'None'}, Status: ${updateStatus || 'No change'}, Description: ${updateDescription.trim()}`;
       if (updatePhoto) {
         updateText += `, New photo added.`;
+        // Simulate adding the photo to the photos array (in a real app, this would be handled by the backend)
+        const newPhotoName = `update_${Date.now()}.jpg`; // Placeholder for uploaded photo name
+        setPhotos([...photos, newPhotoName]);
       }
       const newUpdateComment = {
         id: Date.now(),
@@ -160,78 +170,106 @@ export default function ViewDetails() {
         </div>
       </div>
 
-      {/* Main Body Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Left Column: Images and Progress */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-800">Complaint Photos</h2>
-          <div className="flex flex-col sm:flex-row gap-4">
+      {/* Centered Complaint Details Section */}
+      <div className="max-w-6xl mx-auto mb-8">
+        {/* Complaint Photos */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-6">Complaint Photos</h2>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center max-w-4xl mx-auto">
             {/* Photo 1 */}
-            <div className="flex-1 h-48 bg-gray-200 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+            <div className="flex-1 max-w-md h-64 bg-gray-200 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center mx-auto">
               <img
-                src={`http://localhost:5000/uploads/${complaint.photos[0] || 'placeholder.jpg'}`}
+                src={`http://localhost:5000/uploads/${photos[0] || 'placeholder.jpg'}`}
                 alt="Complaint photo 1"
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-cover rounded-xl"
               />
             </div>
             {/* Photo 2 */}
-            <div className="flex-1 h-48 bg-gray-200 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+            <div className="flex-1 max-w-md h-64 bg-gray-200 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center mx-auto">
               <img
-                src={`http://localhost:5000/uploads/${complaint.photos[1] || 'placeholder.jpg'}`}
+                src={`http://localhost:5000/uploads/${photos[1] || 'placeholder.jpg'}`}
                 alt="Complaint photo 2"
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-cover rounded-xl"
               />
             </div>
           </div>
+        </div>
 
-          {/* Status Progress */}
-          <div className="bg-white p-6 rounded-xl shadow-md">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Status Progress</h3>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-purple-500 rounded-full"></div>
-                <span className="text-sm font-medium text-gray-700">Status</span>
-              </div>
-              <div className="flex-1 h-1 bg-purple-200 mx-4"></div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-orange-500 rounded-full"></div>
-                <span className="text-sm font-medium text-gray-700">Progress</span>
-              </div>
+        {/* Status Progress */}
+        <div className="bg-white p-6 rounded-xl shadow-md mb-8 max-w-3xl mx-auto">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Status Progress</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-purple-500 rounded-full"></div>
+              <span className="text-sm font-medium text-gray-700">Status</span>
             </div>
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>50%</span>
-              <span>75%</span>
+            <div className="flex-1 h-1 bg-purple-200 mx-4 rounded-full"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-orange-500 rounded-full"></div>
+              <span className="text-sm font-medium text-gray-700">Progress</span>
             </div>
           </div>
-
-          {/* Voting Section */}
-          <div className="bg-white p-6 rounded-xl shadow-md">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Vote for this Issue</h3>
-            <button
-              onClick={handleVote}
-              className="flex items-center justify-center gap-2 w-full bg-purple-100 text-purple-700 py-3 rounded-lg font-semibold hover:bg-purple-200 transition"
-            >
-              <FiThumbsUp className="text-lg" /> {votes} Votes
-            </button>
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>50%</span>
+            <span>75%</span>
           </div>
         </div>
 
-        {/* Right Column: Quick Actions */}
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <div className="bg-white p-6 rounded-xl shadow-md">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
-            <div className="space-y-3">
-              <button onClick={openUpdateModal} className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
-                <FiEdit2 /> Update
-              </button>
-              <button onClick={openUpdateModal} className="w-full bg-orange-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center gap-2">
-                <FiEdit3 /> Edit Report
-              </button>
-              <button className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                <FiPhoneCall /> Contact Us
-              </button>
-            </div>
+        {/* Voting Section */}
+        <div className="bg-white p-8 rounded-2xl shadow-lg mb-8 max-w-2xl mx-auto">
+          <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center">Vote for this Issue</h3>
+          <div className="flex justify-center gap-6">
+            <button
+              onClick={handleUpvote}
+              className="flex items-center justify-center gap-3 bg-green-100 text-green-700 px-8 py-4 rounded-xl font-semibold hover:bg-green-200 transition-all duration-300 hover:scale-105 shadow-md min-w-[160px]"
+            >
+              <FiThumbsUp className="text-xl" />
+              <span className="text-lg">{upvotes}</span>
+              <span className="text-base">Upvotes</span>
+            </button>
+            <button
+              onClick={handleDownvote}
+              className="flex items-center justify-center gap-3 bg-red-100 text-red-700 px-8 py-4 rounded-xl font-semibold hover:bg-red-200 transition-all duration-300 hover:scale-105 shadow-md min-w-[160px]"
+            >
+              <FiThumbsDown className="text-xl" />
+              <span className="text-lg">{downvotes}</span>
+              <span className="text-base">Downvotes</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions - Moved to middle, full-width, attractive purple theme */}
+      <div className="max-w-4xl mx-auto mb-8">
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl shadow-lg p-8 text-center">
+          <h3 className="text-2xl font-bold text-purple-800 mb-6 flex items-center justify-center gap-2 mx-auto">
+            <FiSettings className="text-3xl" /> Quick Actions
+          </h3>
+          <p className="text-purple-600 mb-8 text-lg font-medium">Take immediate action on this complaint</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <button 
+              onClick={openUpdateModal} 
+              className="group relative bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white p-6 rounded-xl shadow-md transform hover:scale-105 transition-all duration-300 flex flex-col items-center gap-3"
+            >
+              <FiEdit2 className="text-3xl group-hover:text-purple-200 transition-colors" />
+              <span className="font-semibold text-lg">Update Status</span>
+              <span className="text-sm opacity-90">Provide progress updates</span>
+            </button>
+            <button 
+              onClick={openUpdateModal} 
+              className="group relative bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white p-6 rounded-xl shadow-md transform hover:scale-105 transition-all duration-300 flex flex-col items-center gap-3"
+            >
+              <FiEdit3 className="text-3xl group-hover:text-orange-200 transition-colors" />
+              <span className="font-semibold text-lg">Edit Report</span>
+              <span className="text-sm opacity-90">Modify complaint details</span>
+            </button>
+            <button 
+              className="group relative bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-6 rounded-xl shadow-md transform hover:scale-105 transition-all duration-300 flex flex-col items-center gap-3"
+            >
+              <FiPhoneCall className="text-3xl group-hover:text-blue-200 transition-colors" />
+              <span className="font-semibold text-lg">Contact Support</span>
+              <span className="text-sm opacity-90">Get help from our team</span>
+            </button>
           </div>
         </div>
       </div>
