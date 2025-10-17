@@ -81,11 +81,19 @@ const complaintSchema = new mongoose.Schema(
         }
       }
     ]
+    voters: [
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    type: { type: String, enum: ["upvote", "downvote"] }
+  }
+],
+votes: { type: Number, default: 0 }
   },
   { 
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toObject: { virtuals: true },
+    virtuals: true
   }
 );
 
@@ -102,6 +110,8 @@ complaintSchema.virtual('daysSinceSubmission').get(function() {
 complaintSchema.index({ reportedBy: 1, status: 1 });
 complaintSchema.index({ category: 1, priority: 1 });
 complaintSchema.index({ submittedAt: -1 });
+complaintSchema.index({ voters: 1 });
+complaintSchema.index({ votes: 1 });
 
 const Complaint = mongoose.model("Complaint", complaintSchema);
 export default Complaint;

@@ -9,6 +9,7 @@ import {
   addComment,
   getComments,
   deleteComment
+  voteComplaint
 } from "../controllers/complaintController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 
@@ -38,4 +39,6 @@ router.route("/:id/comments")
 
 router.delete("/:id/comments/:commentId", deleteComment); // DELETE /api/complaints/:id/comments/:commentId - Delete a comment
 
+
+router.patch("/:id/vote", voteComplaint);
 export { router as complaintRoutes };
