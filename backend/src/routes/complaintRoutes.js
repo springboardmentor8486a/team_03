@@ -8,7 +8,7 @@ import {
   deleteComplaint,
   addComment,
   getComments,
-  deleteComment
+  deleteComment,
   voteComplaint
 } from "../controllers/complaintController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";

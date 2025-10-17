@@ -2,135 +2,88 @@ import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import {
   FiArrowLeft,
-  FiCalendar,
-  FiEdit3,
   FiFlag,
-  FiMail,
-  FiMapPin,
   FiSettings,
   FiTag,
   FiThumbsDown,
-  FiThumbsUp
+  FiThumbsUp,
+  FiTrash2
 } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
 import UpdateReport from "./UpdateReport";
+
 export default function ViewDetails() {
   const location = useLocation();
   const navigate = useNavigate();
   const complaint = location.state;
+  const BACKEND_URL = "http://localhost:5000/api";
 
-  // Frontend state
+  const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
+  const loggedInUserId = sessionStorage.getItem("_id") || localStorage.getItem("_id") || "";
+  const role = sessionStorage.getItem("role") || localStorage.getItem("role") || "";
+
   const [upvotes, setUpvotes] = useState(complaint.votes || 0);
-  const [downvotes, setDownvotes] = useState(0);
-  const [photos, setPhotos] = useState(complaint.photos || []);
-  const [workProgressPhotos, setWorkProgressPhotos] = useState(
-    complaint.workProgressPhotos || []
-  );
   const [comments, setComments] = useState([]);
-  const [adminResponses, setAdminResponses] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [updateType, setUpdateType] = useState("");
-  const [updateStatus, setUpdateStatus] = useState("");
-  const [updateDescription, setUpdateDescription] = useState("");
-  const [updatePhoto, setUpdatePhoto] = useState(null);
-  const [activeButton, setActiveButton] = useState("Admin Response");
-  const [title, setTitle] = useState(complaint.title || "");
 
-  const BACKEND_URL = "http://localhost:5000/api"; // Replace with your backend URL
-
-  // Fetch initial data: comments and admin responses
-  useEffect(() => {
-    fetchComments();
-    fetchAdminResponses();
-  }, [fetchComments, fetchAdminResponses]);
+  const authHeaders = { headers: { Authorization: `Bearer ${token}` } };
 
   const fetchComments = useCallback(async () => {
     try {
-      const res = await axios.get(`${BACKEND_URL}/complaints/${complaint._id}/comments`);
-      setComments(res.data);
+      const res = await axios.get(
+        `${BACKEND_URL}/complaints/${complaint._id}/comments`,
+        authHeaders
+      );
+      setComments(Array.isArray(res.data.data) ? res.data.data : []);
     } catch (error) {
       console.error("Error fetching comments:", error);
+      setComments([]);
     }
-  }, [BACKEND_URL, complaint._id]);
+  }, [BACKEND_URL, complaint._id, token]);
 
-  const fetchAdminResponses = useCallback(async () => {
-    try {
-      const res = await axios.get(`${BACKEND_URL}/complaints/${complaint._id}/admin-responses`);
-      setAdminResponses(res.data);
-    } catch (error) {
-      console.error("Error fetching admin responses:", error);
-    }
-  }, [BACKEND_URL, complaint._id]);
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
 
-  // Upvote API call
-  const handleUpvote = async () => {
+  const handleVote = async (type) => {
     try {
-      const res = await axios.patch(`${BACKEND_URL}/complaints/${complaint._id}/vote`, {
-        action: "upvote"
-      });
+      const res = await axios.patch(
+        `${BACKEND_URL}/complaints/${complaint._id}/vote`,
+        { action: type },
+        authHeaders
+      );
       setUpvotes(res.data.votes);
     } catch (error) {
-      console.error("Error upvoting complaint:", error);
+      console.error("Error voting:", error);
     }
   };
 
-  // Downvote API call
-  const handleDownvote = async () => {
-    try {
-      const res = await axios.patch(`${BACKEND_URL}/complaints/${complaint._id}/vote`, {
-        action: "downvote"
-      });
-      setUpvotes(res.data.votes); // or setDownvotes if you track separately
-    } catch (error) {
-      console.error("Error downvoting complaint:", error);
-    }
-  };
-
-  // Add comment API call
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-
     try {
-      const res = await axios.post(`${BACKEND_URL}/complaints/${complaint._id}/comments`, {
-        text: newComment
-      });
-      setComments(res.data); // backend returns updated comment list
+      const res = await axios.post(
+        `${BACKEND_URL}/complaints/${complaint._id}/comments`,
+        { text: newComment },
+        authHeaders
+      );
+      setComments(prev => [...prev, res.data.data]);
       setNewComment("");
     } catch (error) {
       console.error("Error adding comment:", error);
     }
   };
 
-  const openUpdateModal = () => setModalIsOpen(true);
-  const closeModal = () => {
-    setModalIsOpen(false);
-    setUpdateType("");
-    setUpdateStatus("");
-    setUpdateDescription("");
-    setUpdatePhoto(null);
-  };
-
-  const handleSubmitUpdate = async (e) => {
-    e.preventDefault();
-    if (!updateDescription.trim() && !updateType && !updateStatus && !updatePhoto) return;
-
+  const handleDeleteComment = async (commentId) => {
     try {
-      const formData = new FormData();
-      formData.append("updateType", updateType);
-      formData.append("updateStatus", updateStatus);
-      formData.append("description", updateDescription);
-      if (updatePhoto) formData.append("photo", updatePhoto);
-
-      await axios.post(`${BACKEND_URL}/complaints/${complaint._id}/update`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
-
-      fetchAdminResponses(); // refresh admin responses
-      closeModal();
+      await axios.delete(
+        `${BACKEND_URL}/complaints/${complaint._id}/comments/${commentId}`,
+        authHeaders
+      );
+      fetchComments();
     } catch (error) {
-      console.error("Error submitting update:", error);
+      console.error("Error deleting comment:", error);
     }
   };
 
@@ -146,7 +99,7 @@ export default function ViewDetails() {
             <FiArrowLeft className="text-lg" /> <span>Dashboard</span>
           </button>
           <button
-            onClick={openUpdateModal}
+            onClick={() => setModalIsOpen(true)}
             className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
           >
             Update Report
@@ -154,173 +107,116 @@ export default function ViewDetails() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pt-20 pb-10 space-y-6">
-        {/* Header & badges */}
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 px-4 py-2 rounded-lg shadow-sm">
-            {title}
-          </h1>
-
-          <div className="flex flex-wrap items-center mt-2 gap-3">
-            <div className="flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-purple-100 text-purple-800 font-medium shadow-sm hover:bg-purple-200 transition">
-              <FiTag className="w-3 h-3" /> {complaint.category}
-            </div>
-            <div className={`flex items-center gap-1 text-xs px-3 py-1 rounded-full font-medium shadow-sm transition ${complaint.status === "In Progress" ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200" : complaint.status === "Resolved" ? "bg-green-100 text-green-800 hover:bg-green-200" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
-              <FiSettings className="w-3 h-3" /> {complaint.status}
-            </div>
-            <div className={`flex items-center gap-1 text-xs px-3 py-1 rounded-full font-medium shadow-sm transition ${complaint.priority === "High" ? "bg-red-100 text-red-700 hover:bg-red-200" : complaint.priority === "Medium" ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200" : "bg-green-100 text-green-700 hover:bg-green-200"}`}>
-              <FiFlag className="w-3 h-3" /> {complaint.priority}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center mt-4 gap-4 text-sm text-gray-600">
-            <div className="flex items-center gap-1"><FiMapPin /> {complaint.location}</div>
-            <div className="flex items-center gap-1"><FiCalendar /> Submitted: {complaint.submitted}</div>
-            <div className="flex items-center gap-1"><FiCalendar /> Updated: {complaint.updated}</div>
-          </div>
-        </div>
-
-        {/* Post-style Container */}
-        <div className=" p-6 rounded-xl  max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Panel */}
-
-          <div className="col-span-2 space-y-6 bg-white rounded-xl shadow-md p-6">
-            <div className="mt-4">
-              <strong>Description:</strong>
-              <p className="text-gray-700">{complaint.description}</p>
-            </div>
-            {/* Complaint Photos */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                Complaint Photos Submitted by Reporter
-              </h2>
-              <div className="flex gap-4 overflow-x-auto">
-                {photos.map((photo, idx) => (
-                  <div key={idx} className="flex-shrink-0 w-48 h-48 bg-gray-200 rounded-xl flex items-center justify-center">
-                    <img
-                      src={`http://localhost:5000/uploads/${photo || "placeholder.jpg"}`}
-                      alt={`Complaint photo ${idx + 1}`}
-                      className="w-full h-full object-cover rounded-xl"
-                    />
-                  </div>
-                ))}
+      <div className="max-w-7xl mx-auto px-6 pt-20 pb-10">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Panel: Complaint Details */}
+          <div className="flex-1 space-y-6">
+            <div className="bg-white p-6 rounded-xl shadow-md">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">{complaint.title}</h1>
+              <div className="flex gap-3 mt-2 flex-wrap">
+                <span className="px-3 py-1 text-xs bg-purple-100 text-purple-800 rounded-full flex items-center gap-1">
+                  <FiTag /> {complaint.category}
+                </span>
+                <span className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full flex items-center gap-1">
+                  <FiSettings /> {complaint.status}
+                </span>
+                <span className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-full flex items-center gap-1">
+                  <FiFlag /> {complaint.priority}
+                </span>
               </div>
-            </div>
+              <p className="mt-4 text-gray-700">{complaint.description}</p>
+              {complaint.photo && (
+                <div className="mt-4 w-full h-64 bg-gray-200 rounded-lg overflow-hidden">
+                  <img
+                    src={`http://localhost:5000/uploads/${complaint.photo}`}
+                    alt="Complaint"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
 
-            {/* Work Progress Photos */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                Work Progress Photos Submitted by Admin
-              </h2>
-              <div className="flex gap-4 overflow-x-auto">
-                {workProgressPhotos.map((photo, idx) => (
-                  <div key={idx} className="flex-shrink-0 w-48 h-48 bg-gray-200 rounded-xl flex items-center justify-center">
-                    <img
-                      src={`http://localhost:5000/uploads/${photo || "placeholder.jpg"}`}
-                      alt={`Work progress photo ${idx + 1}`}
-                      className="w-full h-full object-cover rounded-xl"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Voting */}
-            <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200">
-              <div className="flex gap-3">
+              {/* Voting */}
+              <div className="flex gap-3 mt-4">
                 <button
-                  onClick={handleUpvote}
-                  className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition"
+                  onClick={() => handleVote("upvote")}
+                  className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200"
                 >
                   <FiThumbsUp /> {upvotes}
                 </button>
                 <button
-                  onClick={handleDownvote}
-                  className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition"
+                  onClick={() => handleVote("downvote")}
+                  className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200"
                 >
                   <FiThumbsDown />
                 </button>
               </div>
-              <button onClick={openUpdateModal} className="flex items-center gap-1 bg-purple-600 text-white px-3 py-1 rounded-lg hover:bg-purple-700 transition">
-                <FiEdit3 /> Update
-              </button>
-            </div>
-          </div>
 
-          {/* Right Panel */}
-          <div className="bg-white rounded-2xl shadow-sm p-4 border h-36 border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              👤 Reporter Information
-            </h2>
-            <p className="mb-2">
-              <span className="font-semibold">Name:</span> {complaint.reporterName || "N/A"}
-            </p>
-            <p className="mb-2 flex items-center gap-2">
-              <FiMail className="text-purple-500" /><span className="font-semibold">Email:</span>
-              <span>{complaint.reporterEmail || "N/A"}</span>
-            </p>
-          </div>
-        </div>
-        <div className="bg-purple-50 p-6 rounded-xl shadow-md border border-purple-200">
-          {/* Admin Responses */}
-          <div className="mt-4">
-            <h3 className="text-md font-semibold text-gray-800 mb-2">Admin Responses</h3>
-            <div className="space-y-2">
-              {adminResponses.length ? (
-                adminResponses.map((resp) => (
-                  <div key={resp._id} className="bg-purple-50 p-3 rounded-lg border-l-4 border-purple-500">
-                    <p className="text-sm text-gray-700">{resp.text}</p>
-                    <span className="text-xs text-gray-500">{new Date(resp.timestamp).toLocaleString()}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 text-sm">No admin responses yet.</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Comments Section */}
-        <div className="bg-purple-50 p-6 rounded-xl shadow-md border border-purple-200">
-          <div className="flex justify-between items-center mb-4 pb-2 border-b border-purple-200">
-            <h3 className="text-lg font-semibold text-purple-800">
-              Comments ({comments.length})
-            </h3>
-          </div>
-          <form onSubmit={handleAddComment} className="mb-4">
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              rows="3"
-            ></textarea>
-            <button type="submit" className="mt-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-              Add Comment
-            </button>
-          </form>
-          <div className="space-y-4">
-            {comments.map((comment) => (
-              <div key={comment._id} className="bg-white p-4 rounded-lg shadow-sm">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-semibold text-gray-800">{comment.user}</span>
-                  <span className="text-sm text-gray-500">{new Date(comment.timestamp).toLocaleString()}</span>
-                </div>
-                <p className="text-gray-700">{comment.text}</p>
+              {/* Random Message */}
+              <div className="bg-purple-50 p-4 rounded-xl shadow-md mt-6">
+                <h1>Admin Responses</h1>
+                <p className="text-gray-700">Thank you for submitting the complaint. It will be reviewed shortly!</p>
               </div>
-            ))}
+
+              {/* Comments */}
+              <div className="bg-purple-50 p-6 rounded-xl shadow-md mt-6">
+                <h3 className="text-lg font-semibold mb-3">Comments ({comments.length})</h3>
+                <form onSubmit={handleAddComment} className="mb-4">
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Add a comment..."
+                    className="w-full p-3 border rounded-lg resize-none"
+                  />
+                  <button type="submit" className="mt-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                    Add Comment
+                  </button>
+                </form>
+
+                {comments.map((comment) => {
+                  const userId = comment.user?._id?.toString() || "";
+                  const canDelete = userId === loggedInUserId || role === "admin";
+                  return (
+                    <div key={comment._id} className="bg-white p-4 rounded-lg shadow-sm flex justify-between mb-2">
+                      <div>
+                        <p className="font-semibold">{comment.user?.name || "User"}</p>
+                        <p>{comment.text}</p>
+                      </div>
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDeleteComment(comment._id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <FiTrash2 />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Panel: Reporter Info */}
+          <div className="w-full lg:w-80 flex-shrink-0">
+            <div className="bg-white p-6 rounded-xl shadow-md sticky top-24">
+              <h3 className="text-lg font-semibold mb-4">Reporter Information</h3>
+              <div className="space-y-2 text-gray-700">
+                <p><span className="font-semibold">Name:</span> {complaint.reportedBy?.name || "N/A"}</p>
+                <p><span className="font-semibold">Email:</span> {complaint.reportedBy?.email || "N/A"}</p>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Update Modal */}
-        {modalIsOpen && (
-          <UpdateReport
-            complaint={complaint}
-            onClose={() => setModalIsOpen(false)}
-            onUpdate={fetchAdminResponses} // refresh admin responses after update
-          />
-        )}
       </div>
+
+      {/* Update Modal */}
+      {modalIsOpen && (
+        <UpdateReport
+          complaint={complaint}
+          onClose={() => setModalIsOpen(false)}
+          onUpdate={fetchComments}
+        />
+      )}
     </>
   );
 }

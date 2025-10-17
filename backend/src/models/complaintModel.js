@@ -80,7 +80,7 @@ const complaintSchema = new mongoose.Schema(
           default: Date.now
         }
       }
-    ]
+    ],
     voters: [
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
