@@ -5,7 +5,8 @@ import {
   getComplaintById,
   updateComplaint,
   getMyComplaints,
-  deleteComplaint
+  deleteComplaint,
+  voteComplaint
 } from "../controllers/complaintController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 
@@ -28,4 +29,6 @@ router.route("/:id")
   .put(updateComplaint)            // PUT /api/complaints/:id
   .delete(deleteComplaint);        // DELETE /api/complaints/:id
 
+
+router.patch("/:id/vote", voteComplaint);
 export { router as complaintRoutes };
