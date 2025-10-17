@@ -294,3 +294,145 @@ export const deleteComplaint = asyncHandler(async (req, res) => {
     throw new Error("Failed to delete complaint");
   }
 });
+
+// ==================== COMMENT ENDPOINTS ====================
+
+// @desc    Add comment to a complaint
+// @route   POST /api/complaints/:id/comments
+// @access  Private
+export const addComment = asyncHandler(async (req, res) => {
+  const { text } = req.body;
+
+  // Validation
+  if (!text || text.trim().length === 0) {
+    res.status(400);
+    throw new Error("Comment text is required");
+  }
+
+  if (text.length > 500) {
+    res.status(400);
+    throw new Error("Comment cannot exceed 500 characters");
+  }
+
+  try {
+    // Find the complaint
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      res.status(404);
+      throw new Error("Complaint not found");
+    }
+
+    // Create new comment object
+    const newComment = {
+      user: req.user.id,
+      text: text.trim(),
+      createdAt: new Date()
+    };
+
+    // Add comment to the complaint
+    complaint.comments.push(newComment);
+    await complaint.save();
+
+    // Populate the user information for the newly added comment
+    await complaint.populate({
+      path: 'comments.user',
+      select: 'name email'
+    });
+
+    // Get the last added comment (newly created)
+    const addedComment = complaint.comments[complaint.comments.length - 1];
+
+    res.status(201).json({
+      success: true,
+      message: "Comment added successfully",
+      data: addedComment
+    });
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    if (error.name === 'CastError') {
+      res.status(404);
+      throw new Error("Complaint not found");
+    }
+    res.status(500);
+    throw new Error("Failed to add comment. Please try again.");
+  }
+});
+
+// @desc    Get all comments for a complaint
+// @route   GET /api/complaints/:id/comments
+// @access  Private
+export const getComments = asyncHandler(async (req, res) => {
+  try {
+    // Find complaint and populate comments with user information
+    const complaint = await Complaint.findById(req.params.id)
+      .populate({
+        path: 'comments.user',
+        select: 'name email'
+      });
+
+    if (!complaint) {
+      res.status(404);
+      throw new Error("Complaint not found");
+    }
+
+    res.status(200).json({
+      success: true,
+      count: complaint.comments.length,
+      data: complaint.comments
+    });
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    if (error.name === 'CastError') {
+      res.status(404);
+      throw new Error("Complaint not found");
+    }
+    res.status(500);
+    throw new Error("Failed to fetch comments");
+  }
+});
+
+// @desc    Delete a comment from a complaint
+// @route   DELETE /api/complaints/:id/comments/:commentId
+// @access  Private
+export const deleteComment = asyncHandler(async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      res.status(404);
+      throw new Error("Complaint not found");
+    }
+
+    // Find the comment by commentId
+    const comment = complaint.comments.id(req.params.commentId);
+
+    if (!comment) {
+      res.status(404);
+      throw new Error("Comment not found");
+    }
+
+    // Check authorization - only comment owner or admin can delete
+    if (comment.user.toString() !== req.user.id && req.user.role !== 'admin') {
+      res.status(403);
+      throw new Error("Not authorized to delete this comment");
+    }
+
+    // Remove the comment using pull
+    complaint.comments.pull(req.params.commentId);
+    await complaint.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Comment deleted successfully"
+    });
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    if (error.name === 'CastError') {
+      res.status(404);
+      throw new Error("Complaint or comment not found");
+    }
+    res.status(500);
+    throw new Error("Failed to delete comment");
+  }
+});

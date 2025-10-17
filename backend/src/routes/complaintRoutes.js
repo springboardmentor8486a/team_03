@@ -5,7 +5,10 @@ import {
   getComplaintById,
   updateComplaint,
   getMyComplaints,
-  deleteComplaint
+  deleteComplaint,
+  addComment,
+  getComments,
+  deleteComment
 } from "../controllers/complaintController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 
@@ -16,7 +19,7 @@ router.use(verifyToken);
 
 import upload from "../middlewares/uploadMiddleware.js";
 
-// Routes  
+// Complaint Routes  
 router.route("/")
   .get(getAllComplaints)           // GET /api/complaints
   .post(upload.single("photo"), createComplaint); // POST /api/complaints with photo upload
@@ -27,5 +30,12 @@ router.route("/:id")
   .get(getComplaintById)           // GET /api/complaints/:id
   .put(updateComplaint)            // PUT /api/complaints/:id
   .delete(deleteComplaint);        // DELETE /api/complaints/:id
+
+// Comment Routes
+router.route("/:id/comments")
+  .post(addComment)                // POST /api/complaints/:id/comments - Add a comment
+  .get(getComments);               // GET /api/complaints/:id/comments - Get all comments
+
+router.delete("/:id/comments/:commentId", deleteComment); // DELETE /api/complaints/:id/comments/:commentId - Delete a comment
 
 export { router as complaintRoutes };
