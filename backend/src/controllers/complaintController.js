@@ -250,13 +250,86 @@ export const getMyComplaints = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Upvote/downvote a complaint
+// @route   PATCH /api/complaints/:id/vote
+// @access  Private
+export const voteComplaint = async (req, res) => {
+  try {
+    console.log("voteComplaint function called!");
+    console.log("req.body:", req.body);
+    console.log("req.params:", req.params);
+    console.log("req.user:", req.user);
+
+    const { action } = req.body;
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    
+    const complaint = await Complaint.findById(id);
+    
+
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+
+    if (!["upvote", "downvote"].includes(action)) {
+      return res.status(400).json({ message: "Invalid action" });
+    }
+
+    
+
+    // Find if user has already voted
+    const existingVote = complaint.voters.find(v => v.userId?.toString() === userId);  
+
+   
+
+    if (existingVote) {
+      // If same vote type was ignored
+      if (existingVote.type === action) {
+        return res.status(200).json({
+          message: `You already ${action}d this complaint`
+        });
+      }
+
+      // If changing vote → update
+      if (existingVote.type === "upvote" && action === "downvote") {
+        complaint.votes -= 2; // remove upvote, add downvote
+      } else if (existingVote.type === "downvote" && action === "upvote") {
+        complaint.votes += 2; // remove downvote, add upvote
+      }
+
+      // Update the user's vote type
+      existingVote.type = action;
+    } else {
+      // New voter
+      complaint.voters.push({ userId, type: action });
+      complaint.votes += action === "upvote" ? 1 : -1;
+    }
+
+    
+
+    try {
+      console.log("Saving complaint:", complaint);  // Before Save
+      const savedComplaint = await complaint.save();
+      console.log("Complaint saved successfully:", savedComplaint);  // After Save
+      res.status(200).json({
+        message: `Complaint ${action}d successfully`,
+        votes: savedComplaint.votes  // Use savedComplaint
+      });
+    } catch (saveError) {
+      console.error("Error saving complaint:", saveError);
+      return res.status(500).json({ message: "Failed to save vote" });
+    }
+  } catch (error) {
+    console.error("Error in voteComplaint:", error);
+    res.status(500).json({ message: "Failed to update vote" });
+  }
+};
+
 // @desc    Delete complaint
 // @route   DELETE /api/complaints/:id
 // @access  Private
 export const deleteComplaint = asyncHandler(async (req, res) => {
-
-
-
   try {
     const complaint = await Complaint.findById(req.params.id);
 
@@ -273,13 +346,6 @@ export const deleteComplaint = asyncHandler(async (req, res) => {
 
     await Complaint.findByIdAndDelete(req.params.id);
 
-    // Update user stats
-    await User.findByIdAndUpdate(complaint.reportedBy, {
-      $inc: { 'stats.totalReports': -1 }
-    });
-
-
-
     res.status(200).json({
       success: true,
       message: "Complaint deleted successfully"
@@ -293,4 +359,4 @@ export const deleteComplaint = asyncHandler(async (req, res) => {
     res.status(500);
     throw new Error("Failed to delete complaint");
   }
-});
+})
