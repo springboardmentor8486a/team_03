@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   FiArrowLeft,
   FiCalendar,
@@ -43,43 +43,47 @@ export default function ViewDetails() {
   useEffect(() => {
     fetchComments();
     fetchAdminResponses();
-  }, []);
+  }, [fetchComments, fetchAdminResponses]);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       const res = await axios.get(`${BACKEND_URL}/complaints/${complaint._id}/comments`);
       setComments(res.data);
     } catch (error) {
       console.error("Error fetching comments:", error);
     }
-  };
+  }, [BACKEND_URL, complaint._id]);
 
-  const fetchAdminResponses = async () => {
+  const fetchAdminResponses = useCallback(async () => {
     try {
       const res = await axios.get(`${BACKEND_URL}/complaints/${complaint._id}/admin-responses`);
       setAdminResponses(res.data);
     } catch (error) {
       console.error("Error fetching admin responses:", error);
     }
-  };
+  }, [BACKEND_URL, complaint._id]);
 
   // Upvote API call
   const handleUpvote = async () => {
     try {
-      const res = await axios.post(`${BACKEND_URL}/complaints/${complaint._id}/upvote`);
-      setUpvotes(res.data.upvotes); // update count from backend
+      const res = await axios.patch(`${BACKEND_URL}/complaints/${complaint._id}/vote`, {
+        action: "upvote"
+      });
+      setUpvotes(res.data.votes);
     } catch (error) {
-      console.error("Error updating upvotes:", error);
+      console.error("Error upvoting complaint:", error);
     }
   };
 
   // Downvote API call
   const handleDownvote = async () => {
     try {
-      const res = await axios.post(`${BACKEND_URL}/complaints/${complaint._id}/downvote`);
-      setDownvotes(res.data.downvotes); // update count from backend
+      const res = await axios.patch(`${BACKEND_URL}/complaints/${complaint._id}/vote`, {
+        action: "downvote"
+      });
+      setUpvotes(res.data.votes); // or setDownvotes if you track separately
     } catch (error) {
-      console.error("Error updating downvotes:", error);
+      console.error("Error downvoting complaint:", error);
     }
   };
 
@@ -224,11 +228,17 @@ export default function ViewDetails() {
             {/* Voting */}
             <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200">
               <div className="flex gap-3">
-                <button onClick={handleUpvote} className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition">
+                <button
+                  onClick={handleUpvote}
+                  className="flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition"
+                >
                   <FiThumbsUp /> {upvotes}
                 </button>
-                <button onClick={handleDownvote} className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition">
-                  <FiThumbsDown /> {downvotes}
+                <button
+                  onClick={handleDownvote}
+                  className="flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition"
+                >
+                  <FiThumbsDown />
                 </button>
               </div>
               <button onClick={openUpdateModal} className="flex items-center gap-1 bg-purple-600 text-white px-3 py-1 rounded-lg hover:bg-purple-700 transition">
