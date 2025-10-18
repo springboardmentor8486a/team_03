@@ -87,7 +87,8 @@ const complaintSchema = new mongoose.Schema(
     type: { type: String, enum: ["upvote", "downvote"] }
   }
 ],
-votes: { type: Number, default: 0 }
+votes: { type: Number, default: 0 },
+downvotes: { type: Number, default: 0 }
   },
   { 
     timestamps: true,

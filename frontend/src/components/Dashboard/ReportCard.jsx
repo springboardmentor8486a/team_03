@@ -12,7 +12,6 @@ export default function ReportCard({ complaint }) {
     description,
     submitted,
     assignedTo,
-    // eslint-disable-next-line no-unused-vars
     photo
   } = complaint;
   {
@@ -70,15 +69,23 @@ export default function ReportCard({ complaint }) {
         {/* Description */}
         <p className="mt-10 text-gray-700 text-sm leading-relaxed text-left">{description}</p>
 
-        {/* <img
-          src={`http://localhost:5000/uploads/${photo}`}
-          alt="Complaint photo"
-          className="mt-4 rounded-md shadow-md max-h-64 object-cover"
-        /> */}
-
+        {/* Complaint Photo */}
+        {photo && (
+          <div className="mt-4 rounded-lg overflow-hidden border border-gray-200">
+            <img
+              src={`http://localhost:5000/uploads/${photo}`}
+              alt="Complaint photo"
+              className="w-full h-48 object-cover hover:scale-105 transition-transform duration-300"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentElement.style.display = 'none';
+              }}
+            />
+          </div>
+        )}
 
         {/* Footer */}
-        <div className="mt-10 flex flex-col gap-1 text-xs text-gray-500 text-left">
+        <div className="mt-6 flex flex-col gap-1 text-xs text-gray-500 text-left">
           <span>Submitted: {submitted || 'N/A'}</span>
           <span className={`${assignedTo === 'Unassigned' ? 'text-orange-600' : 'text-gray-500'}`}>
             Assigned to: {assignedTo || 'Unassigned'}
