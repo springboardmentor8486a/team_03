@@ -27,43 +27,40 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      //  Clear any previous session/user data before new login
+      // Clear previous session/local storage
       localStorage.clear();
       sessionStorage.clear();
 
-      //  API request to login
+      // API request
       const res = await axios.post("http://localhost:5000/api/users/login", {
         email,
         password,
       });
 
-      // Use backend response: all fields at top level
-      const user = res.data;
-      const token = user.token;
+      const user = res.data.user || res.data; // depending on backend
+      const token = res.data.token || user.token;
 
-      //  Store the new session securely
+      // Store session
       if (remember) {
         localStorage.setItem("token", token);
+        localStorage.setItem("_id", user._id);
+        localStorage.setItem("role", user.role);
         localStorage.setItem("user", JSON.stringify(user));
       } else {
         sessionStorage.setItem("token", token);
+        sessionStorage.setItem("_id", user._id);
+        sessionStorage.setItem("role", user.role);
         sessionStorage.setItem("user", JSON.stringify(user));
       }
 
       setLoading(false);
-      // dashboard routing
-      if (user.role === "admin") {
-        setError("");
-        navigate("/admin-dashboard");
-      } else {
-        setError("");
-        navigate("/dashboard");
-      }
+
+      // Navigate based on role
+      if (user.role === "admin") navigate("/admin-dashboard");
+      else navigate("/dashboard");
     } catch (err) {
       console.error(err);
       setLoading(false);
-
-      // 🔎 Show backend error message if available
       if (err.response && err.response.data && err.response.data.message) {
         setError(err.response.data.message);
       } else {
