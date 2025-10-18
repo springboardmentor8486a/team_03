@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../styles/loginpage.css";
 import logo from "../../assets/urbanalive.jpg";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // 👈 imported react-icons
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // 👁 state toggle
   const navigate = useNavigate();
 
   const validateEmail = (v) =>
@@ -19,7 +21,6 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    // ✅ Basic validation
     if (!validateEmail(email)) return setError("Please enter a valid email.");
     if (password.length < 6)
       return setError("Password must be at least 6 characters.");
@@ -27,20 +28,17 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // Clear previous session/local storage
       localStorage.clear();
       sessionStorage.clear();
 
-      // API request
       const res = await axios.post("http://localhost:5000/api/users/login", {
         email,
         password,
       });
 
-      const user = res.data.user || res.data; // depending on backend
+      const user = res.data.user || res.data;
       const token = res.data.token || user.token;
 
-      // Store session
       if (remember) {
         localStorage.setItem("token", token);
         localStorage.setItem("_id", user._id);
@@ -54,8 +52,6 @@ export default function LoginPage() {
       }
 
       setLoading(false);
-
-      // Navigate based on role
       if (user.role === "admin") navigate("/admin-dashboard");
       else navigate("/dashboard");
     } catch (err) {
@@ -161,14 +157,36 @@ export default function LoginPage() {
             </div>
 
             <label className="label">Password</label>
-            <div className="input-with-icon">
+            <div className="input-with-icon" style={{ position: "relative" }}>
               <span className="input-icon">🔒</span>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="show-pass-btn"
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "18px",
+                  color: "#666",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                title={showPassword ? "Hide Password" : "Show Password"}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
 
             <div className="row-between" style={{ marginBottom: 20 }}>
