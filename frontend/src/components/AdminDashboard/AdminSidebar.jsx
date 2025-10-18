@@ -70,13 +70,6 @@ export default function AdminSidebar() {
           {isOpen && <span>User Management</span>}
         </NavLink>
 
-        <NavLink
-          to="/admin/admins"
-          className={({ isActive }) => (isActive ? activeClass : normalClass)}
-        >
-          <Shield size={26} />
-          {isOpen && <span>Admin Management</span>}
-        </NavLink>
 
         <NavLink
           to="/admin/departments"
@@ -100,14 +93,6 @@ export default function AdminSidebar() {
         >
           <MapPin size={26} />
           {isOpen && <span>City Map</span>}
-        </NavLink>
-
-        <NavLink
-          to="/admin/settings"
-          className={({ isActive }) => (isActive ? activeClass : normalClass)}
-        >
-          <Settings size={26} />
-          {isOpen && <span>Settings</span>}
         </NavLink>
       </nav>
     </div>

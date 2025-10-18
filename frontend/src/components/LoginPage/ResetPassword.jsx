@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/urbanalive.jpg";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
@@ -48,7 +52,7 @@ export default function ResetPassword() {
 
   return (
     <div className="flex min-h-screen w-full">
-      {/* LEFT gradient section (hidden on small screens) */}
+      {/* LEFT gradient section */}
       <div className="hidden lg:flex flex-[1.05] bg-gradient-to-b from-[#6e21f2] via-[#b81fe7] to-[#8421b7] text-white p-12 items-center">
         <div className="max-w-[620px] w-full">
           <div className="flex items-center gap-3 mb-4">
@@ -56,7 +60,7 @@ export default function ResetPassword() {
               <img src={logo} alt="logo" className="w-10 h-10 object-contain" />
             </div>
             <div>
-              <div className="font-bold text-lg">YourApp</div>
+              <div className="font-bold text-lg">UrbanAlive</div>
               <div className="text-sm opacity-90 -mt-1">Secure and Smart</div>
             </div>
           </div>
@@ -67,7 +71,7 @@ export default function ResetPassword() {
         </div>
       </div>
 
-      {/* ✅ RIGHT form section (now always fills available space) */}
+      {/* RIGHT form section */}
       <div className="flex flex-col flex-1 bg-white items-center justify-center p-6 sm:p-10 lg:p-14 w-full min-h-screen">
         <div className="w-full max-w-md">
           <button
@@ -82,26 +86,40 @@ export default function ResetPassword() {
           <p className="text-gray-600 mb-6">Enter and confirm your new password below.</p>
 
           <form onSubmit={handleSubmit}>
+            {/* NEW PASSWORD */}
             <label className="block font-semibold mb-2 text-sm">New Password</label>
             <div className="relative mb-4">
               <input
-                type="password"
-                className="w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                type={showPassword ? "text" : "password"}
+                className="w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-sm outline-none focus:ring-2 focus:ring-purple-500 pr-10"
                 placeholder="Enter new password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <span
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 cursor-pointer"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
             </div>
 
+            {/* CONFIRM PASSWORD */}
             <label className="block font-semibold mb-2 text-sm">Confirm Password</label>
             <div className="relative mb-4">
               <input
-                type="password"
-                className="w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                type={showConfirm ? "text" : "password"}
+                className="w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-sm outline-none focus:ring-2 focus:ring-purple-500 pr-10"
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
+              <span
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 cursor-pointer"
+                onClick={() => setShowConfirm(!showConfirm)}
+              >
+                {showConfirm ? <FaEyeSlash /> : <FaEye />}
+              </span>
             </div>
 
             {error && <div className="text-red-600 mb-3 text-sm">{error}</div>}

@@ -92,3 +92,33 @@ html,body,#root { height:100%; margin:0; font-family: Inter, "Segoe UI", Roboto,
   .signup-card { max-width:92%; }
   .signup-heading { font-size:26px; }
 }
+.password-field {
+  position: relative;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 1.2rem;
+}
+.eye-icon:hover {
+  color: #000;
+}
+/* Hide Chrome/Edge built-in password reveal icon */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+}
+
+input::-webkit-credentials-auto-fill-button,
+input::-webkit-contacts-auto-fill-button {
+  display: none !important;
+  visibility: hidden;
+}
+
+input[type="password"]::-webkit-textfield-decoration-container {
+  display: none !important;
+}

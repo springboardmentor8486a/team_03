@@ -7,7 +7,6 @@ import {
   Map,
   Users,
   User,
-  Settings,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -94,13 +93,6 @@ export default function Sidebar() {
           {isOpen && <span>Profile</span>}
         </NavLink>
 
-        <NavLink
-          to="/settings"
-          className={({ isActive }) => (isActive ? activeClass : normalClass)}
-        >
-          <Settings size={26} />
-          {isOpen && <span>Settings</span>}
-        </NavLink>
       </nav>
     </div>
   );

@@ -340,55 +340,7 @@ export default function Profile() {
             </div>
           </div>
 
-        {/* Notifications & Privacy */}
-          <div className="bg-white p-6 rounded-lg shadow space-y-6">
-            <h3 className="flex items-center gap-2 font-semibold text-gray-800 text-lg">
-              <FiBell /> Notification Preferences
-            </h3>
-            <div className="space-y-4">
-              {Object.entries(formData.notifications).map(([key, value]) => (
-                <div key={key} className="flex justify-between p-4 bg-gray-50 border rounded-md">
-                  <span className="capitalize">{key.replace(/([A-Z])/g, " $1")}</span>
-                  <input
-                    type="checkbox"
-                    checked={value}
-                    onChange={() => handleCheckboxChange("notifications", key)}
-                  />
-                </div>
-              ))}
-            </div>
-
-            <h3 className="flex items-center gap-2 font-semibold text-gray-800 text-lg mt-6">
-              <FiLock /> Privacy Settings
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between p-4 bg-gray-50 border rounded-md">
-                <span>Profile Visibility</span>
-                <select
-                  value={formData.privacy.visibility}
-                  onChange={(e) =>
-                    setFormData({ ...formData, privacy: { ...formData.privacy, visibility: e.target.value } })
-                  }
-                  className="border rounded p-1 bg-gray-100"
-                >
-                  <option>Public</option>
-                  <option>Private</option>
-                  <option>Friends Only</option>
-                </select>
-              </div>
-
-              {["showLocation", "showReports", "allowContact"].map((key) => (
-                <div key={key} className="flex justify-between p-4 bg-gray-50 border rounded-md">
-                  <span className="capitalize">{key.replace(/([A-Z])/g, " $1")}</span>
-                  <input
-                    type="checkbox"
-                    checked={formData.privacy[key]}
-                    onChange={() => handleCheckboxChange("privacy", key)}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+        
 
           {/* Danger Zone */}
           <div className="bg-white p-6 rounded-lg shadow space-y-4">
