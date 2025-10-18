@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function AdminReportCard({ report }) {
   const navigate = useNavigate();
-  const { title, location, date, status } = report;
+  const { title, location, date, status, photo, description } = report;
 
   const statusColors = {
     Received: "bg-blue-100 text-blue-700",
@@ -33,6 +33,26 @@ export default function AdminReportCard({ report }) {
           {status}
         </span>
       </div>
+
+      {/* Description */}
+      {description && (
+        <p className="mt-4 text-sm text-gray-700 line-clamp-2">{description}</p>
+      )}
+
+      {/* Complaint Photo */}
+      {photo && (
+        <div className="mt-4 rounded-lg overflow-hidden border border-gray-200">
+          <img
+            src={`http://localhost:5000/uploads/${photo}`}
+            alt="Complaint photo"
+            className="w-full h-40 object-cover hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.parentElement.style.display = 'none';
+            }}
+          />
+        </div>
+      )}
 
       {/* Footer */}
       <div className="mt-4 flex justify-between items-center text-sm text-gray-600">

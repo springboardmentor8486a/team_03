@@ -261,19 +261,37 @@ export const voteComplaint = async (req, res) => {
 
     if (existingVote) {
       if (existingVote.type === action) {
-        return res.status(200).json({ message: `You already ${action}d this complaint` });
+        return res.status(200).json({ 
+          message: `You already ${action}d this complaint`,
+          votes: complaint.votes,
+          downvotes: complaint.downvotes 
+        });
       }
       // Change vote
-      if (existingVote.type === "upvote" && action === "downvote") complaint.votes -= 2;
-      if (existingVote.type === "downvote" && action === "upvote") complaint.votes += 2;
+      if (existingVote.type === "upvote" && action === "downvote") {
+        complaint.votes -= 1;
+        complaint.downvotes += 1;
+      }
+      if (existingVote.type === "downvote" && action === "upvote") {
+        complaint.downvotes -= 1;
+        complaint.votes += 1;
+      }
       existingVote.type = action;
     } else {
       complaint.voters.push({ userId, type: action });
-      complaint.votes += action === "upvote" ? 1 : -1;
+      if (action === "upvote") {
+        complaint.votes += 1;
+      } else {
+        complaint.downvotes += 1;
+      }
     }
 
     const savedComplaint = await complaint.save();
-    res.status(200).json({ message: `Complaint ${action}d successfully`, votes: savedComplaint.votes });
+    res.status(200).json({ 
+      message: `Complaint ${action}d successfully`, 
+      votes: savedComplaint.votes,
+      downvotes: savedComplaint.downvotes 
+    });
   } catch (error) {
     console.error("Error in voteComplaint:", error);
     res.status(500).json({ message: "Failed to update vote" });
