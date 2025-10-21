@@ -80,13 +80,12 @@ export default function Profile() {
           },
         });
 
-        localStorage.setItem("username", userData.name || "User");
-        localStorage.setItem("city", userData.city || "Unknown");
+        sessionStorage.setItem("username", userData.name || "User");
+        sessionStorage.setItem("city", userData.city || "Unknown");
         setLoading(false);
       } catch (err) {
         console.error("Error fetching profile:", err);
         if (err.response?.status === 401) {
-          localStorage.removeItem("token");
           sessionStorage.removeItem("token");
           navigate("/login");
         } else {
