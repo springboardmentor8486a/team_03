@@ -22,6 +22,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("My Reports");
   const [username, setUsername] = useState("User");
+  const [city, setCity] = useState("Unknown");
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -93,7 +94,9 @@ export default function Dashboard() {
   useEffect(() => {
     fetchComplaints();
     const storedName = localStorage.getItem("username");
+    const storedCity=localStorage.getItem("city")
     if (storedName) setUsername(storedName);
+    if(storedCity) setCity(storedCity);
   }, [fetchComplaints]);
 
   return (
@@ -114,7 +117,7 @@ export default function Dashboard() {
               </h1>
               <p className="flex items-center text-gray-600 text-sm mt-1">
                 <FiMapPin size={16} className="mr-1 text-purple-600" />
-                Downtown • Civic Engagement Dashboard
+                {city} • Civic Engagement Dashboard
               </p>
             </div>
 

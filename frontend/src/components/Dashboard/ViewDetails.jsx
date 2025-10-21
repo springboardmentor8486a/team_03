@@ -210,7 +210,7 @@ export default function ViewDetails() {
               <FiArrowLeft className="text-xl" />
               <span className="text-base">Back to Dashboard</span>
             </button>
-            {role === "admin" && (
+            {role === "user" && (
               <button
                 onClick={() => setModalIsOpen(true)}
                 className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-md hover:shadow-lg"

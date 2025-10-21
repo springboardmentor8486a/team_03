@@ -1,19 +1,10 @@
-import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useEffect, useState } from "react";
 import {
   FiArrowLeft,
-  FiUser,
-  FiPhone,
-  FiMapPin,
-  FiBell,
-  FiShield,
   FiCamera,
-  FiFileText,
-  FiAlertTriangle,
-  FiZap,
-  FiDroplet,
-  FiLock,
   FiTrash2,
+  FiUser
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
@@ -90,6 +81,7 @@ export default function Profile() {
         });
 
         localStorage.setItem("username", userData.name || "User");
+        localStorage.setItem("city", userData.city || "Unknown");
         setLoading(false);
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -118,12 +110,12 @@ export default function Profile() {
     }
   };
 
-  const handleCheckboxChange = (section, key) => {
-    setFormData((prev) => ({
-      ...prev,
-      [section]: { ...prev[section], [key]: !prev[section][key] },
-    }));
-  };
+  // const handleCheckboxChange = (section, key) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     [section]: { ...prev[section], [key]: !prev[section][key] },
+  //   }));
+  // };
 
   const handleSubmit = async () => {
     setSaving(true);

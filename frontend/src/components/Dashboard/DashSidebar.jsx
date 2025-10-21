@@ -54,7 +54,7 @@ export default function Sidebar() {
         </NavLink>
 
         <NavLink
-          to="/reports"
+          to="/my-reports"
           className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <FileText size={26} />

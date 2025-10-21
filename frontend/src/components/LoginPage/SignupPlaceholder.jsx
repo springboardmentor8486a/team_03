@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import "../../styles/signuppage.css";
-import logo from "../../assets/urbanalive.jpg";
+import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+import logo from "../../assets/urbanalive.jpg";
+import "../../styles/signuppage.css";
 
 export default function SignupPlaceholder() {
   const navigate = useNavigate();
@@ -67,7 +67,7 @@ export default function SignupPlaceholder() {
       }
     } catch (error) {
       setLoading(false);
-      setError("Network error. Please try again.");
+      setError("Network error. Please try again.",error);
     }
   };
 
@@ -197,7 +197,7 @@ export default function SignupPlaceholder() {
           </form>
 
           <div className="signin-link">
-            Already have an account? <Link to="/">Sign In →</Link>
+            Already have an account? <Link to="/login">Sign In →</Link>
           </div>
         </div>
       </div>
