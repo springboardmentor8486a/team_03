@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import logo from "../../assets/urbanalive.jpg";
 import "../../styles/verify.css";
-import logo from "../../assets/urbanalive.jpg"; 
 
 export default function VerifyPlaceholder() {
   const navigate = useNavigate();
-
   const savedEmail = sessionStorage.getItem("forgot_email") || "";
   const [email] = useState(savedEmail);
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
@@ -24,7 +24,7 @@ export default function VerifyPlaceholder() {
     return `${local.slice(0, 2)}${"*".repeat(Math.max(2, local.length - 2))}@${domain}`;
   };
 
-
+  // Timer for resend button
   useEffect(() => {
     setResendDisabled(true);
     setResendSecs(60);
@@ -44,12 +44,11 @@ export default function VerifyPlaceholder() {
   }, []);
 
   const handleChange = (e, idx) => {
-    const val = e.target.value.replace(/\D/g, ""); 
+    const val = e.target.value.replace(/\D/g, "");
     if (!val) {
       updateDigit(idx, "");
       return;
     }
-
     if (val.length > 1) {
       const chars = val.split("");
       const newDigits = [...digits];
@@ -60,14 +59,11 @@ export default function VerifyPlaceholder() {
         i++;
       }
       setDigits(newDigits);
-      // focus next empty
       if (i <= 5) inputsRef.current[i]?.focus();
       else inputsRef.current[5]?.focus();
       return;
     }
-    // normal single char
     updateDigit(idx, val);
-    // focus next
     if (idx < 5 && val) {
       inputsRef.current[idx + 1]?.focus();
     }
@@ -102,93 +98,68 @@ export default function VerifyPlaceholder() {
     if (!pasted) return;
     const chars = pasted.split("").slice(0, 6);
     const newDigits = ["", "", "", "", "", ""];
+
     for (let i = 0; i < chars.length; i++) newDigits[i] = chars[i];
     setDigits(newDigits);
     const nextIndex = Math.min(chars.length, 5);
     inputsRef.current[nextIndex]?.focus();
   };
-const verifyCode = async (e) => {
-  e.preventDefault();
-  setError("");
-  setMessage("");
 
-  const code = digits.join("");
-  if (code.length !== 6) {
-    setError("Enter the 6-digit verification code.");
-    return;
-  }
+  // In VerifyPlaceholder.jsx
+  const verifyCode = async (e) => {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+    setLoading(true);
 
-  setLoading(true);
+    const otp = digits.join("");
 
-  try {
-    const response = await fetch("http://localhost:5000/api/users/verify-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, otp: code }),
-    });
+    try {
+      const { data } = await axios.post(
+        "http://localhost:5000/api/users/verify-otp",
+        { email, otp }
+      );
 
-    const data = await response.json();
+      // ✅ Navigate relative to current login route
+      navigate(`/login/reset-password/${data.resetToken}`);
 
-    if (!response.ok) {
-      setError(data.message || "Invalid OTP. Try again.");
+    } catch (err) {
+      setError(err.response?.data?.message || "OTP verification failed");
+    } finally {
       setLoading(false);
-      return;
+    }
+  };
+
+
+  const handleResend = async () => {
+    if (resendDisabled) return;
+    setError("");
+    setMessage("");
+    setResendDisabled(true);
+    setResendSecs(60);
+
+    try {
+      await axios.post("http://localhost:5000/api/users/forgot-password", { email });
+      setMessage(`A new code has been sent to ${maskEmail(email)}.`);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to resend OTP.");
     }
 
-  
-    setMessage("Code verified. Redirecting...");
-    setTimeout(() => {
-      navigate("/login/reset-password", { state: { token: data.resetToken } });
-    }, 700);
-
-  } catch {
-    setError("Network error, please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleResend = async () => {
-  if (resendDisabled) return;
-  setError("");
-  setMessage("");
-  setResendDisabled(true);
-  setResendSecs(60);
-
-  try {
-    const response = await fetch("http://localhost:5000/api/users/verify-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      setError(data.message || "Failed to resend OTP.");
-      return;
-    }
-
-    setMessage(`A new code has been sent to ${maskEmail(email)}.`);
-  } catch {
-    setError("Network error, please try again.");
-  }
-
-  const t = setInterval(() => {
-    setResendSecs((s) => {
-      if (s <= 1) {
-        clearInterval(t);
-        setResendDisabled(false);
-        return 0;
-      }
-      return s - 1;
-    });
-  }, 1000);
-};
+    // Start resend countdown again
+    const t = setInterval(() => {
+      setResendSecs((s) => {
+        if (s <= 1) {
+          clearInterval(t);
+          setResendDisabled(false);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  };
 
   return (
     <div className="verify-container">
-      {/* LEFT */}
       <div className="verify-left">
         <div className="left-inner">
           <div className="brand-row">
@@ -202,15 +173,12 @@ const handleResend = async () => {
           </div>
 
           <h1 className="verify-heading">Verify Your Identity</h1>
-
           <p className="verify-desc">
-            We've sent a 6-digit verification code to your email.
-            Enter the code below to continue.
+            We've sent a 6-digit verification code to your email. Enter it below to continue.
           </p>
         </div>
       </div>
 
-      {/* RIGHT */}
       <div className="verify-right">
         <div className="verify-card">
           <div className="back-row">
