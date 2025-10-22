@@ -8,6 +8,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ViewDetails from "./components/Dashboard/ViewDetails";
 import WorkProgressDashboard from "./pages/WorkProgressDashboard";
 import MyReports from "./components/Dashboard/MyReports";
+import AreaMapPage from "./pages/AreaMapPage";
+import AdminMapPage from "./pages/AdminMapPage";
 import AdminUserManagement from "./components/AdminDashboard/AdminUserManagement";
 
 function App() {
@@ -24,11 +26,11 @@ function App() {
         <Route path="/my-reports" element={<MyReports />} /> {/* ✅ add reports route */}
         <Route path="/reportissue" element={<ReportIssue />} /> {/* ✅ add report issue route */}
         <Route path="/work-progress" element={<WorkProgressDashboard />} />
-        
+        <Route path="/map" element={<AreaMapPage />} />
+        <Route path="/admin/map" element={<AdminMapPage />} />
       </Routes>
     </BrowserRouter>
   );
-  
 }
 
 export default App;
