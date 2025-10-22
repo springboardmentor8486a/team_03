@@ -6,11 +6,11 @@ export function decimalToDMS(decimal, isLatitude) {
   const minutes = Math.floor(minutesNotTruncated);
   const seconds = ((minutesNotTruncated - minutes) * 60).toFixed(1);
 
-  // Pad degrees with zeros if needed
+  
   const paddedDegrees = degrees.toString().padStart(2, '0');
-  // Pad minutes with zeros if needed
+  
   const paddedMinutes = minutes.toString().padStart(2, '0');
-  // Pad seconds with zeros if needed
+ 
   const paddedSeconds = parseFloat(seconds).toFixed(1).padStart(4, '0');
 
   const direction = isLatitude
