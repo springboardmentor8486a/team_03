@@ -10,6 +10,7 @@ import WorkProgressDashboard from "./pages/WorkProgressDashboard";
 import MyReports from "./components/Dashboard/MyReports";
 import AreaMapPage from "./pages/AreaMapPage";
 import AdminMapPage from "./pages/AdminMapPage";
+import AdminUserManagement from "./components/AdminDashboard/AdminUserManagement";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/login/*" element={<LoginForm />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
+        <Route path="/admin/users" element={<AdminUserManagement/>}/>
         <Route path="/profile" element={<Profile />} /> {/* ✅ add route */}
         <Route path="/view-details" element={<ViewDetails />} /> {/* ✅ add view details route */}
         <Route path="/my-reports" element={<MyReports />} /> {/* ✅ add reports route */}
