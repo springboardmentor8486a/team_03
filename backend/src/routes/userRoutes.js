@@ -9,6 +9,7 @@ import {
   getUserProfile,
   updateUserProfile,
   testEmail,
+  getAdminUsers,
 } from "../controllers/userController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 import upload from "../middlewares/uploadMiddleware.js";
@@ -26,5 +27,6 @@ router.post("/test-email", testEmail);
 // Protected routes
 router.get("/profile", verifyToken, getUserProfile);
 router.put("/profile", verifyToken, upload.single("photo"), updateUserProfile);
+router.get("/admin/users", verifyToken, getAdminUsers);
 
 export { router as userRoutes };
