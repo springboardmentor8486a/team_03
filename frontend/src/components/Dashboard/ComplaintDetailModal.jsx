@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { getImageUrl } from "../../utils/imageUtils";
 
-const ComplaintDetailModal = ({ isOpen, onClose, complaintId, onUpdate }) => {
+const ComplaintDetailModal = ({ complaint, isOpen, onClose }) => {
   const [complaint, setComplaint] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -159,7 +160,7 @@ const ComplaintDetailModal = ({ isOpen, onClose, complaintId, onUpdate }) => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
                   <img
-                    src={`http://localhost:5000/uploads/${complaint.photo}`}
+                    src={getImageUrl(complaint.photo)}
                     alt="Complaint Photo"
                     className="max-w-xs rounded shadow border"
                   />
