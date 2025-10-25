@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Navbar() {
@@ -24,11 +24,7 @@ export default function Navbar() {
           className="border rounded-lg px-4 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
 
-        {/* Notifications */}
-        <button className="relative text-gray-600 hover:text-purple-600">
-          <Bell size={22} />
-          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
+        
 
         {/* Profile Dropdown */}
         <div className="relative">

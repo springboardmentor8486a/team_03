@@ -1,27 +1,28 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
 import {
-  FiFileText,
+  FiCalendar,
   FiCheckCircle,
   FiClock,
-  FiUsers,
-  FiCalendar,
-  FiTrendingUp,
-  FiMapPin,
+  FiFileText,
   FiFilter,
+  FiMapPin,
   FiRefreshCw,
+  FiTrendingUp,
+  FiUsers,
 } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
+import DashFooter from "../components/Dashboard/DashFooter";
 import Sidebar from "../components/Dashboard/DashSidebar";
 import Navbar from "../components/Dashboard/Navbar";
-import StatCard from "../components/Dashboard/StatCard";
 import ReportCard from "../components/Dashboard/ReportCard";
-import DashFooter from "../components/Dashboard/DashFooter";
+import StatCard from "../components/Dashboard/StatCard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("My Reports");
   const [username, setUsername] = useState("User");
+  const [city, setCity] = useState("Unknown");
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -92,8 +93,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchComplaints();
-    const storedName = localStorage.getItem("username");
+    const storedName = localStorage.getItem("username") || sessionStorage.getItem("username");
+    const storedCity = localStorage.getItem("city") || sessionStorage.getItem("city");
     if (storedName) setUsername(storedName);
+    if (storedCity) setCity(storedCity);
   }, [fetchComplaints]);
 
   return (
@@ -114,7 +117,7 @@ export default function Dashboard() {
               </h1>
               <p className="flex items-center text-gray-600 text-sm mt-1">
                 <FiMapPin size={16} className="mr-1 text-purple-600" />
-                Downtown • Civic Engagement Dashboard
+                {city} • Civic Engagement Dashboard
               </p>
             </div>
 

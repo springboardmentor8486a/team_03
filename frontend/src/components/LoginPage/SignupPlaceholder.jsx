@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import "../../styles/signuppage.css";
 import logo from "../../assets/urbanalive.jpg";
+import "../../styles/signuppage.css";
 
 export default function SignupPlaceholder() {
   const navigate = useNavigate();
@@ -16,6 +17,9 @@ export default function SignupPlaceholder() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const validateEmail = (v) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).toLowerCase());
@@ -40,9 +44,7 @@ export default function SignupPlaceholder() {
     try {
       const response = await fetch("http://localhost:5000/api/users/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: fullName,
           email,
@@ -54,21 +56,18 @@ export default function SignupPlaceholder() {
       const data = await response.json();
 
       if (response.ok) {
-        // Registration successful
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-
         setLoading(false);
         setSuccess("Account created successfully! Redirecting...");
         setTimeout(() => navigate("/login"), 900);
       } else {
-        // Registration failed
         setLoading(false);
         setError(data.message || "Registration failed");
       }
     } catch (error) {
       setLoading(false);
-      setError("Network error. Please try again.");
+      setError("Network error. Please try again.",error);
     }
   };
 
@@ -87,9 +86,7 @@ export default function SignupPlaceholder() {
             </div>
           </div>
 
-          <h1 className="signup-heading">
-            Join Our Community of Change Makers
-          </h1>
+          <h1 className="signup-heading">Join Our Community of Change Makers</h1>
 
           <p className="signup-desc">
             Be part of the solution. Report issues, track progress, and help make
@@ -138,26 +135,42 @@ export default function SignupPlaceholder() {
               />
             </div>
 
+            {/* PASSWORD FIELD */}
             <label className="label">Password</label>
-            <div className="input-with-icon">
+            <div className="input-with-icon password-field">
               <span className="input-icon">🔒</span>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Create a password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <span
+                className="eye-icon"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ cursor: "pointer" }}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
             </div>
 
+            {/* CONFIRM PASSWORD FIELD */}
             <label className="label">Confirm Password</label>
-            <div className="input-with-icon">
+            <div className="input-with-icon password-field">
               <span className="input-icon">🔒</span>
               <input
-                type="password"
+                type={showConfirm ? "text" : "password"}
                 placeholder="Confirm your password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
               />
+              <span
+                className="eye-icon"
+                onClick={() => setShowConfirm(!showConfirm)}
+                style={{ cursor: "pointer" }}
+              >
+                {showConfirm ? <FaEyeSlash /> : <FaEye />}
+              </span>
             </div>
 
             <div className="agree-row">
@@ -184,7 +197,7 @@ export default function SignupPlaceholder() {
           </form>
 
           <div className="signin-link">
-            Already have an account? <Link to="/">Sign In →</Link>
+            Already have an account? <Link to="/login">Sign In →</Link>
           </div>
         </div>
       </div>

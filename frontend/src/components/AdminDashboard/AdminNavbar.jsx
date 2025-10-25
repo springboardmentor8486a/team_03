@@ -16,19 +16,7 @@ export default function AdminNavbar() {
 
       {/* Right Section */}
       <div className="flex items-center space-x-5">
-        {/* Search */}
-        <input
-          type="text"
-          placeholder="Search reports, users..."
-          className="border rounded-lg px-4 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        />
-
-        {/* Notifications */}
-        <button className="relative text-gray-600 hover:text-purple-600">
-          <Bell size={22} />
-          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
-
+        
         {/* Profile + Logout */}
         <div className="flex items-center space-x-3">
           {/* Profile Icon + Name */}

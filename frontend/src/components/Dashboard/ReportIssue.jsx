@@ -9,6 +9,7 @@ import {
 } from "react-icons/fi";
 
 import LocationMap from "./LocationMap";
+import { decimalToDMS } from "../../utils/coordinateUtils";
 
 export default function ReportIssue() {
   const navigate = useNavigate();
@@ -36,7 +37,9 @@ export default function ReportIssue() {
   };
 
   const handleLocationChange = (coords) => {
-    setFormData((prev) => ({ ...prev, location: coords.join(",") }));
+    const dmsLat = decimalToDMS(coords[0], true);
+    const dmsLng = decimalToDMS(coords[1], false);
+    setFormData((prev) => ({ ...prev, location: `${dmsLat} ${dmsLng}` }));
     setShowMap(false);
   };
 

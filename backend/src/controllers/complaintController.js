@@ -18,7 +18,17 @@ export const createComplaint = asyncHandler(async (req, res) => {
   }
 
   try {
-    const photo = req.file ? req.file.filename : null;
+    // Handle photo upload - Cloudinary returns full URL, local storage returns filename
+    let photo = null;
+    if (req.file) {
+      if (req.file.path) {
+        // Cloudinary upload - use the secure URL
+        photo = req.file.path;
+      } else {
+        // Local storage fallback - use filename
+        photo = req.file.filename;
+      }
+    }
 
     const complaint = await Complaint.create({
       title: title.trim(),
@@ -91,6 +101,56 @@ export const getAllComplaints = asyncHandler(async (req, res) => {
     console.error("Error fetching complaints:", error);
     res.status(500);
     throw new Error("Failed to fetch complaints");
+  }
+});
+
+// @desc    Admin: Get all user complaints (with optional filters)
+// @route   GET /api/complaints/admin/all
+// @access  Private (admin)
+export const adminGetAllComplaints = asyncHandler(async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status, category, priority, search, user } = req.query;
+
+    let query = {};
+    if (status) query.status = status;
+    if (category) query.category = category;
+    if (priority) query.priority = priority;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { location: { $regex: search, $options: "i" } }
+      ];
+    }
+    if (user) {
+      // allow filtering by reporter user id
+      query.reportedBy = user;
+    }
+
+    const skip = (page - 1) * limit;
+    const total = await Complaint.countDocuments(query);
+
+    const complaints = await Complaint.find(query)
+      .populate("reportedBy", "name email role")
+      .sort({ submittedAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    res.status(200).json({
+      success: true,
+      count: complaints.length,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      },
+      data: complaints
+    });
+  } catch (error) {
+    console.error("Error fetching admin complaints:", error);
+    res.status(500);
+    throw new Error("Failed to fetch complaints for admin");
   }
 });
 

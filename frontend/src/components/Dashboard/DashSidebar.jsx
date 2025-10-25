@@ -7,7 +7,6 @@ import {
   Map,
   Users,
   User,
-  Settings,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -47,7 +46,7 @@ export default function Sidebar() {
       {/* Menu */}
       <nav className="flex-1 p-6 space-y-6">
         <NavLink
-          to="/"
+          to="/dashboard"
           className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <LayoutDashboard size={26} />
@@ -55,7 +54,7 @@ export default function Sidebar() {
         </NavLink>
 
         <NavLink
-          to="/reports"
+          to="/my-reports"
           className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <FileText size={26} />
@@ -94,13 +93,6 @@ export default function Sidebar() {
           {isOpen && <span>Profile</span>}
         </NavLink>
 
-        <NavLink
-          to="/settings"
-          className={({ isActive }) => (isActive ? activeClass : normalClass)}
-        >
-          <Settings size={26} />
-          {isOpen && <span>Settings</span>}
-        </NavLink>
       </nav>
     </div>
   );

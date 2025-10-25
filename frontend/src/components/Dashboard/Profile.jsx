@@ -1,21 +1,13 @@
-import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useEffect, useState } from "react";
 import {
   FiArrowLeft,
-  FiUser,
-  FiPhone,
-  FiMapPin,
-  FiBell,
-  FiShield,
   FiCamera,
-  FiFileText,
-  FiAlertTriangle,
-  FiZap,
-  FiDroplet,
-  FiLock,
   FiTrash2,
+  FiUser
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUtils";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -89,12 +81,12 @@ export default function Profile() {
           },
         });
 
-        localStorage.setItem("username", userData.name || "User");
+        sessionStorage.setItem("username", userData.name || "User");
+        sessionStorage.setItem("city", userData.city || "Unknown");
         setLoading(false);
       } catch (err) {
         console.error("Error fetching profile:", err);
         if (err.response?.status === 401) {
-          localStorage.removeItem("token");
           sessionStorage.removeItem("token");
           navigate("/login");
         } else {
@@ -118,12 +110,12 @@ export default function Profile() {
     }
   };
 
-  const handleCheckboxChange = (section, key) => {
-    setFormData((prev) => ({
-      ...prev,
-      [section]: { ...prev[section], [key]: !prev[section][key] },
-    }));
-  };
+  // const handleCheckboxChange = (section, key) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     [section]: { ...prev[section], [key]: !prev[section][key] },
+  //   }));
+  // };
 
   const handleSubmit = async () => {
     setSaving(true);
@@ -260,7 +252,7 @@ export default function Profile() {
           <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative overflow-hidden">
             {formData.photo ? (
               <img
-                src={typeof formData.photo === 'string' ? `http://localhost:5000/uploads/${formData.photo}` : URL.createObjectURL(formData.photo)}
+                src={typeof formData.photo === 'string' ? getImageUrl(formData.photo) : URL.createObjectURL(formData.photo)}
                 alt="Profile"
                 className="w-full h-full object-cover rounded-full"
               />
@@ -340,55 +332,7 @@ export default function Profile() {
             </div>
           </div>
 
-        {/* Notifications & Privacy */}
-          <div className="bg-white p-6 rounded-lg shadow space-y-6">
-            <h3 className="flex items-center gap-2 font-semibold text-gray-800 text-lg">
-              <FiBell /> Notification Preferences
-            </h3>
-            <div className="space-y-4">
-              {Object.entries(formData.notifications).map(([key, value]) => (
-                <div key={key} className="flex justify-between p-4 bg-gray-50 border rounded-md">
-                  <span className="capitalize">{key.replace(/([A-Z])/g, " $1")}</span>
-                  <input
-                    type="checkbox"
-                    checked={value}
-                    onChange={() => handleCheckboxChange("notifications", key)}
-                  />
-                </div>
-              ))}
-            </div>
-
-            <h3 className="flex items-center gap-2 font-semibold text-gray-800 text-lg mt-6">
-              <FiLock /> Privacy Settings
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between p-4 bg-gray-50 border rounded-md">
-                <span>Profile Visibility</span>
-                <select
-                  value={formData.privacy.visibility}
-                  onChange={(e) =>
-                    setFormData({ ...formData, privacy: { ...formData.privacy, visibility: e.target.value } })
-                  }
-                  className="border rounded p-1 bg-gray-100"
-                >
-                  <option>Public</option>
-                  <option>Private</option>
-                  <option>Friends Only</option>
-                </select>
-              </div>
-
-              {["showLocation", "showReports", "allowContact"].map((key) => (
-                <div key={key} className="flex justify-between p-4 bg-gray-50 border rounded-md">
-                  <span className="capitalize">{key.replace(/([A-Z])/g, " $1")}</span>
-                  <input
-                    type="checkbox"
-                    checked={formData.privacy[key]}
-                    onChange={() => handleCheckboxChange("privacy", key)}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+        
 
           {/* Danger Zone */}
           <div className="bg-white p-6 rounded-lg shadow space-y-4">

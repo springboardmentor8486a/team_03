@@ -16,6 +16,7 @@ import {
   FiMail
 } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUtils";
 import UpdateReport from "./UpdateReport";
 
 export default function ViewDetails() {
@@ -210,7 +211,7 @@ export default function ViewDetails() {
               <FiArrowLeft className="text-xl" />
               <span className="text-base">Back to Dashboard</span>
             </button>
-            {role === "admin" && (
+            {role === "user" && (
               <button
                 onClick={() => setModalIsOpen(true)}
                 className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-md hover:shadow-lg"
@@ -282,7 +283,7 @@ export default function ViewDetails() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Attached Photo</h3>
                     <div className="rounded-xl overflow-hidden shadow-md border border-gray-200 hover:shadow-xl transition-shadow duration-300">
                       <img
-                        src={`http://localhost:5000/uploads/${complaint.photo}`}
+                        src={getImageUrl(complaint.photo)}
                         alt="Complaint"
                         className="w-full h-auto max-h-96 object-contain bg-gray-50"
                         onError={(e) => {

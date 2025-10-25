@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { decimalToDMS, dmsToDecimal } from "../../utils/coordinateUtils";
 
 const DEFAULT_POSITION = [20.5937, 78.9629]; // Center of India
 
@@ -16,7 +17,11 @@ function LocationPicker({ onLocationSelect }) {
 
   return position ? (
     <Marker position={position}>
-      <Popup>Selected Location</Popup>
+      <Popup>
+        Selected Location<br />
+        {decimalToDMS(position[0], true)}<br />
+        {decimalToDMS(position[1], false)}
+      </Popup>
     </Marker>
   ) : null;
 }
