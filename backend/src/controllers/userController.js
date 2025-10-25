@@ -388,15 +388,22 @@ const adminUpdateUser = asyncHandler(async (req, res) => {
 // @route   DELETE /api/users/admin/:id
 // @access  Admin
 const adminDeleteUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id);
+  const userId = req.params.id;
+
+  const user = await User.findById(userId);
   if (!user) {
-    res.status(404);
-    throw new Error('User not found');
+    return res.status(404).json({ success: false, message: "User not found" });
   }
 
-  await user.remove();
-  res.json({ success: true, message: 'User deleted' });
+  // Delete complaints by this user
+  await Complaint.deleteMany({ user: user._id });
+
+  // Delete user
+  await User.findByIdAndDelete(user._id);
+
+  res.json({ success: true, message: "User and related complaints deleted successfully" });
 });
+
 
 /* ---------------- JWT GENERATOR ---------------- */
 const generateToken = (payload) => {
