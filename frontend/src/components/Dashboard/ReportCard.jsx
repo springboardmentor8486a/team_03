@@ -1,8 +1,8 @@
-import { FiMapPin, FiEye, FiEdit } from "react-icons/fi";
+import { FiEdit, FiEye, FiMapPin } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUtils";
 
-export default function ReportCard({ complaint, onClick }) {
+export default function ReportCard({ complaint }) {
   const navigate = useNavigate();
   const {
     title,
@@ -34,8 +34,7 @@ export default function ReportCard({ complaint, onClick }) {
     navigate("/view-details", {
       state: { 
         ...complaint, 
-        photos: [complaint.photo],
-        from // Pass the source page
+        photos: [complaint.photo]
       }
     });
   }
