@@ -7,6 +7,7 @@ import {
   FiUser
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUtils";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -251,7 +252,7 @@ export default function Profile() {
           <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold relative overflow-hidden">
             {formData.photo ? (
               <img
-                src={typeof formData.photo === 'string' ? `http://localhost:5000/uploads/${formData.photo}` : URL.createObjectURL(formData.photo)}
+                src={typeof formData.photo === 'string' ? getImageUrl(formData.photo) : URL.createObjectURL(formData.photo)}
                 alt="Profile"
                 className="w-full h-full object-cover rounded-full"
               />

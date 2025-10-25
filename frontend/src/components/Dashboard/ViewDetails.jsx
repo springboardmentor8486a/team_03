@@ -16,6 +16,7 @@ import {
   FiMail
 } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUtils";
 import UpdateReport from "./UpdateReport";
 
 export default function ViewDetails() {
@@ -282,7 +283,7 @@ export default function ViewDetails() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Attached Photo</h3>
                     <div className="rounded-xl overflow-hidden shadow-md border border-gray-200 hover:shadow-xl transition-shadow duration-300">
                       <img
-                        src={`http://localhost:5000/uploads/${complaint.photo}`}
+                        src={getImageUrl(complaint.photo)}
                         alt="Complaint"
                         className="w-full h-auto max-h-96 object-contain bg-gray-50"
                         onError={(e) => {
