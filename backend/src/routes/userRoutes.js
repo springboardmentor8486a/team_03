@@ -9,6 +9,7 @@ import {
   getUserProfile,
   updateUserProfile,
   testEmail,
+  getAdminUsers,
   adminListUsers,
   adminGetUser,
   adminUpdateUser,
@@ -30,6 +31,7 @@ router.post("/test-email", testEmail);
 // Protected routes
 router.get("/profile", verifyToken, getUserProfile);
 router.put("/profile", verifyToken, upload.single("photo"), updateUserProfile);
+router.get("/admin/users", verifyToken, getAdminUsers);
 
 // Admin routes - manage users
 router.get("/admin/list", verifyToken, isAdmin, adminListUsers);

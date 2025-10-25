@@ -1,6 +1,7 @@
 // src/controllers/userController.js
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
+import Complaint from "../models/complaintModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import createTransporter from "../utils/mailer.js"; // ✅ centralized transporter
@@ -283,6 +284,35 @@ const testEmail = asyncHandler(async (req, res) => {
   }
 });
 
+/* ---------------- GET ADMIN USERS ---------------- */
+// @desc    Get all users for admin
+// @route   GET /api/users/admin/users
+// @access  Private/Admin
+const getAdminUsers = asyncHandler(async (req, res) => {
+  try {
+    // Only get users with role 'user'
+    const users = await User.find({ role: 'user' }).select("-password -otp -otpExpiry -isOtpVerified");
+
+    const usersWithComplaintCount = await Promise.all(
+      users.map(async (user) => {
+        const complaintCount = await Complaint.countDocuments({ reportedBy: user._id });
+        return {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          city: user.city,
+          complaintCount,
+        };
+      })
+    );
+
+    res.status(200).json(usersWithComplaintCount);
+  } catch (error) {
+    console.error(error);
+    res.status(500);
+    throw new Error("Server error while fetching users");
+  }
+});
 /* ---------------- ADMIN: LIST USERS ---------------- */
 // @desc    Get paginated list of users (admin)
 // @route   GET /api/users/admin/list
@@ -386,6 +416,7 @@ export {
   getUserProfile,
   updateUserProfile,
   testEmail,
+  getAdminUsers,
   adminListUsers,
   adminGetUser,
   adminUpdateUser,
