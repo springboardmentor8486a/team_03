@@ -46,7 +46,7 @@ export default function Sidebar() {
       {/* Menu */}
       <nav className="flex-1 p-6 space-y-6">
         <NavLink
-          to="/"
+          to="/dashboard"
           className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <LayoutDashboard size={26} />

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FiSettings, FiInfo, FiCheck, FiClock, FiCalendar } from "react-icons/fi";
+import { getImageUrl } from "../utils/imageUtils";
 
 import AdminSidebar from "../components/AdminDashboard/AdminSidebar";
 import AdminNavbar from "../components/AdminDashboard/AdminNavbar";
@@ -177,7 +178,7 @@ export default function WorkProgressDashboard() {
                         {selectedComplaint.photos.map((photo, idx) => (
                           <img
                             key={idx}
-                            src={`http://localhost:5000/uploads/${photo}`}
+                            src={getImageUrl(photo)}
                             alt="Complaint photo"
                             className="rounded w-full h-32 object-cover"
                           />

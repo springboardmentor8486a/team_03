@@ -1,5 +1,6 @@
 import { FiMapPin, FiEye, FiEdit, FiCheckCircle } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUtils";
 
 export default function AdminReportCard({ report }) {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export default function AdminReportCard({ report }) {
       {photo && (
         <div className="mt-4 rounded-lg overflow-hidden border border-gray-200">
           <img
-            src={`http://localhost:5000/uploads/${photo}`}
+            src={getImageUrl(photo)}
             alt="Complaint photo"
             className="w-full h-40 object-cover hover:scale-105 transition-transform duration-300"
             onError={(e) => {
