@@ -16,6 +16,7 @@ import AdminDepartments from "./pages/AdminDepartments";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminReportDetails from "./pages/AdminReportDetails";
 import Community from "./pages/Community";
+import "./utils/debugAuth"; // Import debug utility
 
 function App() {
   return (

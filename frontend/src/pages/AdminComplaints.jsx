@@ -2,11 +2,14 @@ import React, { useEffect, useState } from "react";
 import AdminSidebar from "../components/AdminDashboard/AdminSidebar";
 import AdminNavbar from "../components/AdminDashboard/AdminNavbar";
 import AdminReportCard from "../components/AdminDashboard/AdminReportCard";
+import AdminStatusUpdateForm from "../components/AdminDashboard/AdminStatusUpdateForm";
 
 export default function AdminComplaints() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
 
   useEffect(() => {
     const fetchComplaints = async () => {
@@ -40,6 +43,31 @@ export default function AdminComplaints() {
     fetchComplaints();
   }, []);
 
+  const handleStatusUpdate = (complaint, isRefresh = false) => {
+    if (isRefresh) {
+      // Update the complaint in the list
+      setComplaints(prev => 
+        prev.map(c => c._id === complaint._id ? complaint : c)
+      );
+    } else {
+      // Open the update form
+      setSelectedComplaint(complaint);
+      setIsUpdateFormOpen(true);
+    }
+  };
+
+  const handleFormClose = () => {
+    setIsUpdateFormOpen(false);
+    setSelectedComplaint(null);
+  };
+
+  const handleComplaintUpdated = (updatedComplaint) => {
+    // Update the complaint in the list
+    setComplaints(prev => 
+      prev.map(c => c._id === updatedComplaint._id ? updatedComplaint : c)
+    );
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <AdminSidebar />
@@ -60,10 +88,22 @@ export default function AdminComplaints() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {complaints.map((c) => (
-                <AdminReportCard key={c._id || c.id} report={c} />
+                <AdminReportCard 
+                  key={c._id || c.id} 
+                  report={c} 
+                  onStatusUpdate={handleStatusUpdate}
+                />
               ))}
             </div>
           )}
+
+          {/* Status Update Form Modal */}
+          <AdminStatusUpdateForm
+            complaint={selectedComplaint}
+            isOpen={isUpdateFormOpen}
+            onClose={handleFormClose}
+            onStatusUpdate={handleComplaintUpdated}
+          />
         </main>
       </div>
     </div>

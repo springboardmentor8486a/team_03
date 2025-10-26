@@ -317,7 +317,7 @@ export default function ViewDetails() {
             </div>
 
             {/* Admin Response Section */}
-            {complaint.adminResponse && (
+            {(complaint.adminResponse || complaint.adminNotes) && (
               <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl shadow-lg border border-purple-200 p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="bg-purple-600 text-white p-2 rounded-lg">
@@ -325,9 +325,27 @@ export default function ViewDetails() {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Admin Response</h3>
                 </div>
-                <p className="text-gray-800 leading-relaxed">
-                  {complaint.adminResponse || "Thank you for submitting the complaint. It will be reviewed shortly!"}
-                </p>
+                {complaint.adminNotes && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-purple-700 mb-2">Latest Update:</h4>
+                    <p className="text-gray-800 leading-relaxed bg-white p-4 rounded-lg border border-purple-200">
+                      {complaint.adminNotes}
+                    </p>
+                  </div>
+                )}
+                {complaint.adminResponse && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-purple-700 mb-2">General Response:</h4>
+                    <p className="text-gray-800 leading-relaxed">
+                      {complaint.adminResponse}
+                    </p>
+                  </div>
+                )}
+                {!complaint.adminNotes && !complaint.adminResponse && (
+                  <p className="text-gray-800 leading-relaxed">
+                    Thank you for submitting the complaint. It will be reviewed shortly!
+                  </p>
+                )}
               </div>
             )}
 
