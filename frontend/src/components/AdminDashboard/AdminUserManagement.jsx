@@ -126,7 +126,7 @@ export default function AdminUserManagement() {
                 <p className="text-lg font-semibold text-zinc-900">{users.length}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm border">
+            {/* <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm border">
               <FiUserCheck className="text-green-600" size={28} />
               <div>
                 <p className="text-sm text-zinc-600">Active Users</p>
@@ -134,8 +134,8 @@ export default function AdminUserManagement() {
                   {users.filter((u) => u.status === "Active").length}
                 </p>
               </div>
-            </div>
-            <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm border">
+            </div> */}
+            {/* <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm border">
               <FiUserX className="text-red-500" size={28} />
               <div>
                 <p className="text-sm text-zinc-600">Inactive Users</p>
@@ -143,8 +143,8 @@ export default function AdminUserManagement() {
                   {users.filter((u) => u.status !== "Active").length}
                 </p>
               </div>
-            </div>
-            <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm border">
+            </div> */}
+            {/* <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm border">
               <FiShield className="text-blue-600" size={28} />
               <div>
                 <p className="text-sm text-zinc-600">Authorities</p>
@@ -152,7 +152,7 @@ export default function AdminUserManagement() {
                   {users.filter((u) => u.role === "Authority").length}
                 </p>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* User Table */}
@@ -163,6 +163,7 @@ export default function AdminUserManagement() {
                 <tr>
                   <th className="px-6 py-3 text-left">Name</th>
                   <th className="px-6 py-3 text-left">Email</th>
+                  <th className="px-6 py-3 text-left">Reported complaints</th>
                   <th className="px-6 py-3 text-left">Location</th>
                   <th className="px-6 py-3 text-right">Actions</th>
                 </tr>
@@ -177,6 +178,7 @@ export default function AdminUserManagement() {
                     >
                       <td className="px-6 py-3 font-medium text-zinc-900">{user.name}</td>
                       <td className="px-6 py-3 text-zinc-600">{user.email}</td>
+                      <td className="px-6 py-3 text-zinc-600">{user.complaintCount}</td>
                       <td className="px-6 py-3 text-zinc-600">{user.city}</td>
                       <td className="px-6 py-3 text-right flex justify-end gap-2">
                         <button
