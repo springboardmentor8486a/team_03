@@ -1,4 +1,5 @@
-import { useState } from "react";
+/* eslint-disable no-unused-vars */
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Eye,
@@ -17,44 +18,75 @@ import { useNavigate } from "react-router-dom";
 import Footer from "./DashFooter";
 import ViewDetails from "./ViewDetails";
 
-const reportsMock = [
-  {
-    id: 1,
-    title: "Broken streetlight on Main St",
-    status: "In Progress",
-    category: "Infrastructure",
-    priority: "High",
-    description:
-      "The streetlight near the intersection has been out for 3 days, creating a safety hazard for pedestrians and drivers.",
-    location: "Main St & 5th Ave",
-    submitted: "12/6/2024",
-    lastUpdate: "12/10/2024",
-    comments: 3,
-    likes: 12,
-  },
-  {
-    id: 2,
-    title: "Overflowing garbage bins",
-    status: "Resolved",
-    category: "Sanitation",
-    priority: "Medium",
-    description:
-      "Garbage bins near Park Avenue have been overflowing for a week but have now been cleared.",
-    location: "Park Avenue, Zone 3",
-    submitted: "11/25/2024",
-    lastUpdate: "12/02/2024",
-    comments: 2,
-    likes: 8,
-  },
-];
-
 export default function MyReports() {
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("All");
   const navigate = useNavigate();
 
+  // ✅ Token Retrieval
+  const getToken = () => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (token) return token;
+
+    const user = localStorage.getItem("user") || sessionStorage.getItem("user");
+    if (user) {
+      try {
+        return JSON.parse(user).token;
+      } catch (err) {
+        console.error("Error parsing user:", err);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // ✅ Fetch Complaints from Backend
+  const fetchComplaints = useCallback(async () => {
+    const token = getToken();
+    if (!token) {
+      setError("Please login to view your reports.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      const response = await fetch("http://localhost:5000/api/complaints/my", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 403)
+          setError("You are not authorized to view these reports.");
+        else setError("Failed to load your reports.");
+        setComplaints([]);
+        return;
+      }
+
+      const data = await response.json();
+      setComplaints(data?.data || []);
+    } catch (err) {
+      console.error("Error fetching complaints:", err);
+      setError("Failed to load your reports. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchComplaints();
+  }, [fetchComplaints]);
+
+  // ✅ UI Filters
   const tabs = ["All", "Submitted", "In Review", "In Progress", "Resolved", "Rejected"];
   const categories = [
     "All Categories",
@@ -67,26 +99,27 @@ export default function MyReports() {
   ];
   const statuses = ["All Status", "Submitted", "In Review", "In Progress", "Resolved", "Rejected"];
 
-  const filteredReports = reportsMock.filter((r) => {
-    const matchesSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === "All Categories" || r.category === categoryFilter;
+  // ✅ Filtered Complaints
+  const filteredReports = complaints.filter((r) => {
+    const matchesSearch = r.title?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      categoryFilter === "All Categories" || r.category === categoryFilter;
     const matchesStatus =
       (statusFilter === "All Status" || r.status === statusFilter) &&
       (activeTab === "All" || r.status === activeTab);
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  // ✅ Updated summary cards text
+  // ✅ Summary Cards (static or can be dynamic in future)
   const summaryCards = [
-    { label: "Total", value: "6 reports", sub: "", color: "from-purple-500 to-indigo-500", icon: <FileText /> },
-    { label: "Submitted", value: "1 new", sub: "", color: "from-blue-500 to-sky-500", icon: <FileCheck2 /> },
-    { label: "In Review", value: "1 pending", sub: "", color: "from-yellow-500 to-amber-400", icon: <Clock /> },
-    { label: "In Progress", value: "2 active", sub: "", color: "from-orange-500 to-pink-500", icon: <Activity /> },
-    { label: "Resolved", value: "1 done", sub: "", color: "from-green-500 to-emerald-400", icon: <CheckCircle2 /> },
-    { label: "Rejected", value: "1 closed", sub: "", color: "from-red-500 to-rose-500", icon: <XCircle /> },
+    { label: "Total", value: `${complaints.length} reports`, color: "from-purple-500 to-indigo-500", icon: <FileText /> },
+    { label: "Submitted", value: "1 new", color: "from-blue-500 to-sky-500", icon: <FileCheck2 /> },
+    { label: "In Review", value: "1 pending", color: "from-yellow-500 to-amber-400", icon: <Clock /> },
+    { label: "In Progress", value: "2 active", color: "from-orange-500 to-pink-500", icon: <Activity /> },
+    { label: "Resolved", value: "1 done", color: "from-green-500 to-emerald-400", icon: <CheckCircle2 /> },
+    { label: "Rejected", value: "1 closed", color: "from-red-500 to-rose-500", icon: <XCircle /> },
   ];
 
-  // ✅ Priority color map
   const priorityColors = {
     High: "bg-red-100 text-red-700 border-red-300",
     Urgent: "bg-orange-100 text-orange-700 border-orange-300",
@@ -121,8 +154,8 @@ export default function MyReports() {
         </button>
       </div>
 
-      {/* ✅ Summary Cards */}
       <div className="flex-1 p-8 space-y-8">
+        {/* ✅ Summary Cards */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-5">
           {summaryCards.map((item, idx) => (
             <motion.div
@@ -141,18 +174,17 @@ export default function MyReports() {
           ))}
         </div>
 
-        {/* Filters Section */}
+        {/* Filters */}
         <div className="flex flex-wrap justify-between items-center gap-4">
           <div className="flex flex-wrap gap-2">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 ${
-                  activeTab === tab
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 ${activeTab === tab
                     ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md"
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 {tab}
               </button>
@@ -189,73 +221,74 @@ export default function MyReports() {
         </div>
 
         {/* ✅ Report Cards */}
-        <div className="space-y-6">
-          {filteredReports.length === 0 ? (
-            <p className="text-gray-500 italic text-center mt-10">No reports found.</p>
-          ) : (
-            filteredReports.map((r) => (
-              <motion.div
-                key={r.id}
-                layout
-                whileHover={{ scale: 1.01 }}
-                className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition"
-              >
-                <div className="flex flex-wrap gap-3 items-center">
-                  <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-semibold rounded-full">
-                    {r.status}
-                  </span>
-                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm font-semibold rounded-full">
-                    {r.category}
-                  </span>
-                  <span
-                    className={`px-3 py-1 text-sm font-semibold rounded-full border ${priorityColors[r.priority] || "bg-gray-100 text-gray-700 border-gray-300"
-                      }`}
-                  >
-                    {r.priority}
-                  </span>
+        {loading ? (
+          <p className="text-center text-gray-500 mt-10">Loading your reports...</p>
+        ) : error ? (
+          <p className="text-center text-red-500 mt-10">{error}</p>
+        ) : filteredReports.length === 0 ? (
+          <p className="text-gray-500 italic text-center mt-10">No reports found.</p>
+        ) : (
+          filteredReports.map((r) => (
+            <motion.div
+              key={r._id}
+              layout
+              whileHover={{ scale: 1.01 }}
+              className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition"
+            >
+              <div className="flex flex-wrap gap-3 items-center">
+                <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-semibold rounded-full">
+                  {r.status}
+                </span>
+                <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm font-semibold rounded-full">
+                  {r.category}
+                </span>
+                <span
+                  className={`px-3 py-1 text-sm font-semibold rounded-full border ${priorityColors[r.priority] ||
+                    "bg-gray-100 text-gray-700 border-gray-300"
+                    }`}
+                >
+                  {r.priority}
+                </span>
+              </div>
+
+              <h2 className="font-semibold text-lg text-gray-900 mt-3">{r.title}</h2>
+              <p className="text-gray-600 mt-1">{r.description}</p>
+
+              <div className="grid sm:grid-cols-3 gap-3 mt-5">
+                <div className="bg-purple-50 border border-purple-100 rounded-lg p-3">
+                  <p className="text-sm text-gray-500">Location</p>
+                  <p className="font-medium text-gray-800">{r.location}</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                  <p className="text-sm text-gray-500">Submitted</p>
+                  <p className="font-medium text-gray-800">{r.createdAt?.split("T")[0]}</p>
+                </div>
+                <div className="bg-orange-50 border border-orange-100 rounded-lg p-3">
+                  <p className="text-sm text-gray-500">Last Update</p>
+                  <p className="font-medium text-gray-800">{r.updatedAt?.split("T")[0]}</p>
+                </div>
+              </div>
+
+              {/* <div className="flex justify-between items-center mt-5">
+                <div className="flex gap-5 text-gray-500">
+                  <div className="flex items-center gap-1">
+                    <MessageSquare size={18} /> {r.comments?.length || 0}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ThumbsUp size={18} /> {r.likes || 0}
+                  </div>
                 </div>
 
-                <h2 className="font-semibold text-lg text-gray-900 mt-3">{r.title}</h2>
-                <p className="text-gray-600 mt-1">{r.description}</p>
-
-                {/* ✅ Tinted Info Boxes */}
-                <div className="grid sm:grid-cols-3 gap-3 mt-5">
-                  <div className="bg-purple-50 border border-purple-100 rounded-lg p-3">
-                    <p className="text-sm text-gray-500">Location</p>
-                    <p className="font-medium text-gray-800">{r.location}</p>
-                  </div>
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
-                    <p className="text-sm text-gray-500">Submitted</p>
-                    <p className="font-medium text-gray-800">{r.submitted}</p>
-                  </div>
-                  <div className="bg-orange-50 border border-orange-100 rounded-lg p-3">
-                    <p className="text-sm text-gray-500">Last Update</p>
-                    <p className="font-medium text-gray-800">{r.lastUpdate}</p>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center mt-5">
-                  <div className="flex gap-5 text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <MessageSquare size={18} /> {r.comments}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <ThumbsUp size={18} /> {r.likes}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => navigate(`/viewdetails/${r.id}`)}
-                    className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium transition"
-                    >
-                    <Eye size={18} /> View Details
-                    </button>
-
-                </div>
-              </motion.div>
-            ))
-          )}
-        </div>
+                <button
+                  onClick={() => navigate(`/view-details/${r._id}`, { state: r })}
+                  className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium transition"
+                >
+                  <Eye size={18} /> View Details
+                </button>
+              </div> */}
+            </motion.div>
+          ))
+        )}
       </div>
 
       <Footer />

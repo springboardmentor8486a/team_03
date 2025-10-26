@@ -1,20 +1,24 @@
-import React from "react";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import {
-  FiMapPin,
-  FiUser,
-  FiClock,
+  FiArrowLeftCircle,
   FiCheckCircle,
+  FiClock,
   FiFilter,
+  FiLayers,
+  FiMapPin,
   FiRefreshCw,
   FiSend,
+  FiUser,
   FiZoomIn,
-  FiZoomOut,
-  FiLayers,
+  FiZoomOut
 } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import Footer from "./DashFooter"; // ✅ Adjust this path as needed
 
+
 export default function AreaMap() {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* ✅ Header */}
@@ -31,23 +35,18 @@ export default function AreaMap() {
               whileHover={{ scale: 1.05 }}
               className="flex items-center gap-2"
             >
-              <img
-                src="/urbanalive-logo.png"
-                alt="UrbanAlive"
-                className="w-9 h-9 rounded"
-              />
-              <div>
-                <h1 className="font-semibold text-gray-800 text-lg">
-                  Clean Street
-                </h1>
-                <p className="text-xs text-gray-500">
-                  Civic Engagement Platform
-                </p>
-              </div>
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="flex items-center gap-2 text-indigo-600 font-semibold hover:text-indigo-700 transition"
+              >
+                <FiArrowLeftCircle size={20} />
+                Back to Dashboard
+              </button>
             </motion.div>
 
-            <span className="text-gray-400 text-sm mx-2">›</span>
-            <span className="text-sm text-gray-700 font-medium">Area Map</span>
+            <h1 className="text-lg font-semibold text-gray-800">
+             Area Map
+            </h1>
           </div>
 
           {/* Buttons */}
@@ -172,15 +171,14 @@ const StatCard = ({ icon, label, value }) => (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2 text-gray-600">{icon}</div>
       <span
-        className={`text-xs font-semibold ${
-          label === "Resolved"
+        className={`text-xs font-semibold ${label === "Resolved"
             ? "text-green-600"
             : label === "In Progress"
-            ? "text-orange-600"
-            : label === "Your Reports"
-            ? "text-blue-600"
-            : "text-purple-600"
-        }`}
+              ? "text-orange-600"
+              : label === "Your Reports"
+                ? "text-blue-600"
+                : "text-purple-600"
+          }`}
       >
         {label.toUpperCase()}
       </span>

@@ -41,7 +41,7 @@ function App() {
         <Route path="/my-reports" element={<MyReports />} /> {/* ✅ add reports route */}
         <Route path="/analytics" element={<Analytics />} /> {/* ✅ add analytics route */}
         <Route path="/map" element={<AreaMap />} /> {/* ✅ add map route */}
-        <Route path="/community" element={<CommunityReports />} /> {/* ✅ add community route */}
+        <Route path="/communitys" element={<CommunityReports />} /> {/* ✅ add community route */}
         <Route path="/reportissue" element={<ReportIssue />} /> {/* ✅ add report issue route */}
         <Route path="/work-progress" element={<WorkProgressDashboard />} />
         <Route path="/map" element={<AreaMapPage />} />
