@@ -52,7 +52,7 @@ export default function LoginPage() {
       }
 
       setLoading(false);
-      if (user.role === "admin") navigate("/admin-dashboard");
+      if (user.role === "admin") navigate("/admin/dashboard");
       else navigate("/dashboard");
     } catch (err) {
       console.error(err);

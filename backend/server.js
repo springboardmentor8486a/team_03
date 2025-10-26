@@ -16,7 +16,7 @@ app.use(cors({
     credentials: true,
 }));
 
-// Serve static files from uploads folder
+// Serve static files from uploads folder (fallback for local storage and existing images)
 import path from "path";
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 

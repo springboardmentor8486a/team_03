@@ -16,6 +16,7 @@ import {
   FiMail
 } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUtils";
 import UpdateReport from "./UpdateReport";
 
 export default function ViewDetails() {
@@ -210,7 +211,7 @@ export default function ViewDetails() {
               <FiArrowLeft className="text-xl" />
               <span className="text-base">Back to Dashboard</span>
             </button>
-            {role === "user" && (
+            {role === "admin" && (
               <button
                 onClick={() => setModalIsOpen(true)}
                 className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-md hover:shadow-lg"
@@ -282,7 +283,7 @@ export default function ViewDetails() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Attached Photo</h3>
                     <div className="rounded-xl overflow-hidden shadow-md border border-gray-200 hover:shadow-xl transition-shadow duration-300">
                       <img
-                        src={`http://localhost:5000/uploads/${complaint.photo}`}
+                        src={getImageUrl(complaint.photo)}
                         alt="Complaint"
                         className="w-full h-auto max-h-96 object-contain bg-gray-50"
                         onError={(e) => {
@@ -316,7 +317,7 @@ export default function ViewDetails() {
             </div>
 
             {/* Admin Response Section */}
-            {complaint.adminResponse && (
+            {(complaint.adminResponse || complaint.adminNotes) && (
               <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl shadow-lg border border-purple-200 p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="bg-purple-600 text-white p-2 rounded-lg">
@@ -324,9 +325,27 @@ export default function ViewDetails() {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Admin Response</h3>
                 </div>
-                <p className="text-gray-800 leading-relaxed">
-                  {complaint.adminResponse || "Thank you for submitting the complaint. It will be reviewed shortly!"}
-                </p>
+                {complaint.adminNotes && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-purple-700 mb-2">Latest Update:</h4>
+                    <p className="text-gray-800 leading-relaxed bg-white p-4 rounded-lg border border-purple-200">
+                      {complaint.adminNotes}
+                    </p>
+                  </div>
+                )}
+                {complaint.adminResponse && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-purple-700 mb-2">General Response:</h4>
+                    <p className="text-gray-800 leading-relaxed">
+                      {complaint.adminResponse}
+                    </p>
+                  </div>
+                )}
+                {!complaint.adminNotes && !complaint.adminResponse && (
+                  <p className="text-gray-800 leading-relaxed">
+                    Thank you for submitting the complaint. It will be reviewed shortly!
+                  </p>
+                )}
               </div>
             )}
 

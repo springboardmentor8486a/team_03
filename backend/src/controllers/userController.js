@@ -1,6 +1,7 @@
 // src/controllers/userController.js
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
+import Complaint from "../models/complaintModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import createTransporter from "../utils/mailer.js"; // ✅ centralized transporter
@@ -49,7 +50,7 @@ const registerUser = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      token: generateToken(user._id),
+      token: generateToken({ id: user._id, role: user.role, email: user.email }),
     });
   } else {
     res.status(400);
@@ -71,7 +72,7 @@ const loginUser = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      token: generateToken(user._id),
+      token: generateToken({ id: user._id, role: user.role, email: user.email }),
     });
   } else {
     res.status(401);
@@ -157,7 +158,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
   await user.save();
 
   // Generate a JWT token for reset-password URL
-  const resetToken = generateToken(user._id);
+ const resetToken = generateToken({ id: user._id });
 
   res.json({
     message: "OTP verified. You can reset your password now.",
@@ -245,7 +246,10 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     }
   });
 
-  if (req.file) user.photo = req.file.filename;
+  // Save Cloudinary URL if photo uploaded
+  if (req.file && req.file.path) {
+    user.photo = req.file.path;
+  }
 
   const updatedUser = await user.save();
   const userResponse = updatedUser.toObject();
@@ -283,9 +287,134 @@ const testEmail = asyncHandler(async (req, res) => {
   }
 });
 
+/* ---------------- GET ADMIN USERS ---------------- */
+// @desc    Get all users for admin
+// @route   GET /api/users/admin/users
+// @access  Private/Admin
+const getAdminUsers = asyncHandler(async (req, res) => {
+  try {
+    // Only get users with role 'user'
+    const users = await User.find({ role: 'user' }).select("-password -otp -otpExpiry -isOtpVerified");
+
+    const usersWithComplaintCount = await Promise.all(
+      users.map(async (user) => {
+        const complaintCount = await Complaint.countDocuments({ reportedBy: user._id });
+        return {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          city: user.city,
+          complaintCount,
+        };
+      })
+    );
+
+    res.status(200).json(usersWithComplaintCount);
+  } catch (error) {
+    console.error(error);
+    res.status(500);
+    throw new Error("Server error while fetching users");
+  }
+});
+/* ---------------- ADMIN: LIST USERS ---------------- */
+// @desc    Get paginated list of users (admin)
+// @route   GET /api/users/admin/list
+// @access  Admin
+const adminListUsers = asyncHandler(async (req, res) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 25;
+  const search = req.query.search ? String(req.query.search).trim() : null;
+  const role = req.query.role ? String(req.query.role) : null;
+
+  const filter = {};
+  if (search) {
+    filter.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+      { phone: { $regex: search, $options: 'i' } },
+    ];
+  }
+  if (role) filter.role = role;
+
+  const total = await User.countDocuments(filter);
+  const users = await User.find(filter)
+    .select('-password -otp -otpExpiry -isOtpVerified')
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+
+  res.json({ success: true, data: users, total, page, pages: Math.ceil(total / limit) });
+});
+
+/* ---------------- ADMIN: GET USER BY ID ---------------- */
+// @desc    Get single user by id (admin)
+// @route   GET /api/users/admin/:id
+// @access  Admin
+const adminGetUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id).select('-password -otp -otpExpiry -isOtpVerified');
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+  res.json({ success: true, data: user });
+});
+
+/* ---------------- ADMIN: UPDATE USER ---------------- */
+// @desc    Update user (admin) - e.g., change role
+// @route   PUT /api/users/admin/:id
+// @access  Admin
+const adminUpdateUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Only allow certain fields to be updated by admin
+  const allowed = ['name', 'email', 'role', 'phone', 'city', 'address', 'bio'];
+  allowed.forEach((field) => {
+    if (req.body[field] !== undefined) user[field] = req.body[field];
+  });
+
+  const updated = await user.save();
+  const userResponse = updated.toObject();
+  delete userResponse.password;
+  delete userResponse.otp;
+  delete userResponse.otpExpiry;
+  delete userResponse.isOtpVerified;
+
+  res.json({ success: true, message: 'User updated', data: userResponse });
+});
+
+/* ---------------- ADMIN: DELETE USER ---------------- */
+// @desc    Delete user (admin)
+// @route   DELETE /api/users/admin/:id
+// @access  Admin
+const adminDeleteUser = asyncHandler(async (req, res) => {
+  const userId = req.params.id;
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  // Delete complaints by this user
+  await Complaint.deleteMany({ user: user._id });
+
+  // Delete user
+  await User.findByIdAndDelete(user._id);
+
+  res.json({ success: true, message: "User and related complaints deleted successfully" });
+});
+
+
 /* ---------------- JWT GENERATOR ---------------- */
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30m" }); // shorter expiration for reset
+const generateToken = (payload) => {
+  // If payload is just an ID (legacy), convert to object
+  if (typeof payload === 'string') {
+    payload = { id: payload };
+  }
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" }); // 1 hour for login tokens
 };
 
 export {
@@ -297,4 +426,9 @@ export {
   getUserProfile,
   updateUserProfile,
   testEmail,
+  getAdminUsers,
+  adminListUsers,
+  adminGetUser,
+  adminUpdateUser,
+  adminDeleteUser,
 };

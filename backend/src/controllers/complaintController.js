@@ -18,7 +18,17 @@ export const createComplaint = asyncHandler(async (req, res) => {
   }
 
   try {
-    const photo = req.file ? req.file.filename : null;
+    // Handle photo upload - Cloudinary returns full URL, local storage returns filename
+    let photo = null;
+    if (req.file) {
+      if (req.file.path) {
+        // Cloudinary upload - use the secure URL
+        photo = req.file.path;
+      } else {
+        // Local storage fallback - use filename
+        photo = req.file.filename;
+      }
+    }
 
     const complaint = await Complaint.create({
       title: title.trim(),
@@ -91,6 +101,150 @@ export const getAllComplaints = asyncHandler(async (req, res) => {
     console.error("Error fetching complaints:", error);
     res.status(500);
     throw new Error("Failed to fetch complaints");
+  }
+});
+
+// @desc    Admin: Get all user complaints (with optional filters)
+// @route   GET /api/complaints/admin/all
+// @access  Private (admin)
+export const adminGetAllComplaints = asyncHandler(async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status, category, priority, search, user } = req.query;
+
+    let query = {};
+    if (status) query.status = status;
+    if (category) query.category = category;
+    if (priority) query.priority = priority;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { location: { $regex: search, $options: "i" } }
+      ];
+    }
+    if (user) {
+      // allow filtering by reporter user id
+      query.reportedBy = user;
+    }
+
+    const skip = (page - 1) * limit;
+    const total = await Complaint.countDocuments(query);
+
+    const complaints = await Complaint.find(query)
+      .populate("reportedBy", "name email role")
+      .sort({ submittedAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    res.status(200).json({
+      success: true,
+      count: complaints.length,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      },
+      data: complaints
+    });
+  } catch (error) {
+    console.error("Error fetching admin complaints:", error);
+    res.status(500);
+    throw new Error("Failed to fetch complaints for admin");
+  }
+});
+
+// @desc    Admin: Update complaint status
+// @route   PUT /api/complaints/admin/:id/status
+// @access  Private (admin)
+export const adminUpdateComplaintStatus = asyncHandler(async (req, res) => {
+  try {
+    const { status, adminNotes, assignedTo } = req.body;
+    const complaintId = req.params.id;
+
+    // Validate status
+    const validStatuses = ["Received", "In Review", "In Progress", "Resolved", "Closed"];
+    if (!status || !validStatuses.includes(status)) {
+      res.status(400);
+      throw new Error(`Status must be one of: ${validStatuses.join(", ")}`);
+    }
+
+    // Find the complaint
+    const complaint = await Complaint.findById(complaintId);
+    if (!complaint) {
+      res.status(404);
+      throw new Error("Complaint not found");
+    }
+
+    // Prepare update data
+    const updateData = {
+      status,
+      updatedAt: new Date()
+    };
+
+    // Add admin notes if provided
+    if (adminNotes && adminNotes.trim()) {
+      updateData.adminNotes = adminNotes.trim();
+    }
+
+    // Handle assignment
+    if (assignedTo) {
+      if (assignedTo.userId) {
+        // Validate the assigned user exists
+        const assignedUser = await User.findById(assignedTo.userId);
+        if (!assignedUser) {
+          res.status(400);
+          throw new Error("Assigned user not found");
+        }
+        updateData.assignedTo = {
+          userId: assignedTo.userId,
+          name: assignedTo.name || assignedUser.name,
+          assignedAt: new Date()
+        };
+      } else {
+        // Clear assignment if no userId provided
+        updateData.assignedTo = null;
+      }
+    }
+
+    // Handle resolved status - set resolvedAt and update user stats
+    if (status === "Resolved" && complaint.status !== "Resolved") {
+      updateData.resolvedAt = new Date();
+      
+      // Update user's resolved reports count
+      await User.findByIdAndUpdate(complaint.reportedBy, {
+        $inc: { "stats.resolvedReports": 1 }
+      });
+    } else if (status !== "Resolved" && complaint.status === "Resolved") {
+      // If changing from Resolved to another status, remove resolvedAt and decrement counter
+      updateData.resolvedAt = null;
+      
+      await User.findByIdAndUpdate(complaint.reportedBy, {
+        $inc: { "stats.resolvedReports": -1 }
+      });
+    }
+
+    // Update the complaint
+    const updatedComplaint = await Complaint.findByIdAndUpdate(
+      complaintId,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate("reportedBy", "name email");
+
+    res.status(200).json({
+      success: true,
+      message: `Complaint status updated to ${status}`,
+      data: updatedComplaint
+    });
+
+  } catch (error) {
+    console.error("Error updating complaint status:", error);
+    if (error.name === "CastError") {
+      res.status(404);
+      throw new Error("Complaint not found");
+    }
+    res.status(500);
+    throw new Error("Failed to update complaint status");
   }
 });
 
