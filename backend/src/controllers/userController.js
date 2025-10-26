@@ -158,7 +158,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
   await user.save();
 
   // Generate a JWT token for reset-password URL
-  const resetToken = generateToken(user._id);
+ const resetToken = generateToken({ id: user._id });
 
   res.json({
     message: "OTP verified. You can reset your password now.",
