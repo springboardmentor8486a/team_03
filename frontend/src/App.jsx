@@ -8,6 +8,10 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ViewDetails from "./components/Dashboard/ViewDetails";
 import WorkProgressDashboard from "./pages/WorkProgressDashboard";
 import MyReports from "./components/Dashboard/MyReports";
+import Analytics from "./components/Dashboard/Analytics";
+import AreaMap from "./components/Dashboard/AreaMap";
+import CommunityReports from "./components/Dashboard/Community";
+
 import AreaMapPage from "./pages/AreaMapPage";
 import AdminMapPage from "./pages/AdminMapPage";
 import AdminUserManagement from "./components/AdminDashboard/AdminUserManagement";
@@ -35,6 +39,9 @@ function App() {
         <Route path="/profile" element={<Profile />} /> {/* ✅ add route */}
         <Route path="/view-details" element={<ViewDetails />} /> {/* ✅ add view details route */}
         <Route path="/my-reports" element={<MyReports />} /> {/* ✅ add reports route */}
+        <Route path="/analytics" element={<Analytics />} /> {/* ✅ add analytics route */}
+        <Route path="/map" element={<AreaMap />} /> {/* ✅ add map route */}
+        <Route path="/community" element={<CommunityReports />} /> {/* ✅ add community route */}
         <Route path="/reportissue" element={<ReportIssue />} /> {/* ✅ add report issue route */}
         <Route path="/work-progress" element={<WorkProgressDashboard />} />
         <Route path="/map" element={<AreaMapPage />} />
