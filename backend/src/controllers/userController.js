@@ -246,7 +246,10 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     }
   });
 
-  if (req.file) user.photo = req.file.filename;
+  // Save Cloudinary URL if photo uploaded
+  if (req.file && req.file.path) {
+    user.photo = req.file.path;
+  }
 
   const updatedUser = await user.save();
   const userResponse = updatedUser.toObject();

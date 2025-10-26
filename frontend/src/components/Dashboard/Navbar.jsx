@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageUtils";
 
 export default function Navbar() {
+  const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : {};
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -32,9 +35,19 @@ export default function Navbar() {
             className="flex items-center space-x-2 focus:outline-none"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-            <span className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold">
-              J
-            </span>
+            <div className="w-9 h-9 rounded-full overflow-hidden">
+              {user.photo ? (
+                <img
+                  src={getImageUrl(user.photo)}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-purple-600 flex items-center justify-center text-white font-bold">
+                  {user.name ? user.name[0].toUpperCase() : "U"}
+                </div>
+              )}
+            </div>
             <ChevronDown
               size={18}
               className={`text-gray-600 transition-transform ${
