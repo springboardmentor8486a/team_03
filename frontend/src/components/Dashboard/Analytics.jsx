@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   BarChart,
   Bar,
@@ -18,31 +19,49 @@ import { FiArrowLeftCircle } from "react-icons/fi";
 
 export default function AnalyticsPage() {
   const navigate = useNavigate();
-
-  const [stats] = useState({
-    totalReports: 10,
+  const [isLoading, setIsLoading] = useState(true);
+  const [timeframe, setTimeframe] = useState('6');
+  
+  const [stats, setStats] = useState({
+    totalReports: 0,
     resolved: 0,
     inProgress: 0,
     rejected: 0,
-    avgResponse: 0,
     resolutionRate: 0,
     activeReports: 0,
   });
 
-  const monthlyData = [
-    { name: "Jul", reports: 2 },
-    { name: "Aug", reports: 3 },
-    { name: "Sep", reports: 1 },
-    { name: "Oct", reports: 4 },
-    { name: "Nov", reports: 5 },
-    { name: "Dec", reports: 3 },
-  ];
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
 
-  const categoryData = [
-    { name: "Roads", reports: 5 },
-    { name: "Public Transport", reports: 3 },
-    { name: "Infrastructure", reports: 2 },
-  ];
+  const fetchAnalytics = async () => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const config = {
+        headers: { Authorization: `Bearer ${token}` }
+      };
+
+      // Fetch all analytics data in parallel
+      const [monthlyRes, categoryRes, overallRes] = await Promise.all([
+        axios.get('http://localhost:5000/api/analytics/monthly', config),
+        axios.get('http://localhost:5000/api/analytics/category', config),
+        axios.get('http://localhost:5000/api/analytics/overall', config)
+      ]);
+
+      setMonthlyData(monthlyRes.data.data);
+      setCategoryData(categoryRes.data.data);
+      setStats(overallRes.data.data);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -94,34 +113,63 @@ export default function AnalyticsPage() {
           </select>
         </motion.div>
 
-        {/* Top Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <AnimatedCard title="Total Reports" color="purple-500" value={stats.totalReports} />
-          <AnimatedCard title="Resolved" color="green-500" value={stats.resolved} />
-          <AnimatedCard title="In Progress" color="orange-400" value={stats.inProgress} />
-          <AnimatedCard title="Rejected" color="red-500" value={stats.rejected} />
+        {isLoading ? (
+        // Loading state
+        <div className="flex flex-col items-center justify-center space-y-4 py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+          <p className="text-gray-600">Loading analytics data...</p>
         </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartCard title="Monthly Reports" type="line" data={monthlyData} />
-          <ChartCard title="Reports by Category" type="bar" data={categoryData} />
-        </div>
-
-        {/* Performance Metrics */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-          className="bg-white p-5 rounded-xl shadow-md"
-        >
-          <h3 className="text-gray-700 font-medium mb-4">Performance Metrics</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <MetricCard title="Average Response Time" value={`${stats.avgResponse} days`} color="purple-400" />
-            <MetricCard title="Resolution Rate" value={`${stats.resolutionRate}%`} subtitle="success rate" color="green-400" />
-            <MetricCard title="Active Reports" value={stats.activeReports} subtitle="pending action" color="blue-400" />
+      ) : (
+        <>
+          {/* Top Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <AnimatedCard title="Total Reports" color="purple-500" value={stats.totalReports} />
+            <AnimatedCard title="Resolved" color="green-500" value={stats.resolved} />
+            <AnimatedCard title="In Progress" color="orange-400" value={stats.inProgress} />
+            <AnimatedCard title="Rejected" color="red-500" value={stats.rejected} />
           </div>
-        </motion.div>
+
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ChartCard 
+              title="Monthly Reports" 
+              type="line" 
+              data={monthlyData} 
+              emptyMessage="No monthly data available"
+            />
+            <ChartCard 
+              title="Reports by Category" 
+              type="bar" 
+              data={categoryData}
+              emptyMessage="No category data available"
+            />
+          </div>
+
+          {/* Performance Metrics */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="bg-white p-5 rounded-xl shadow-md"
+          >
+            <h3 className="text-gray-700 font-medium mb-4">Performance Metrics</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <MetricCard 
+                title="Resolution Rate" 
+                value={`${stats.resolutionRate}%`} 
+                subtitle="success rate" 
+                color="green-400" 
+              />
+              <MetricCard 
+                title="Active Reports" 
+                value={stats.activeReports} 
+                subtitle="pending action" 
+                color="blue-400" 
+              />
+            </div>
+          </motion.div>
+        </>
+      )}
       </main>
 
       <Footer />
@@ -130,7 +178,7 @@ export default function AnalyticsPage() {
 }
 
 // 🔹 Chart Card Component
-const ChartCard = ({ title, type, data }) => (
+const ChartCard = ({ title, type, data, emptyMessage = "No data available" }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
@@ -138,24 +186,30 @@ const ChartCard = ({ title, type, data }) => (
     className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow"
   >
     <h3 className="text-gray-700 font-medium mb-3">{title}</h3>
-    <ResponsiveContainer width="100%" height={250}>
-      {type === "line" ? (
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="name" stroke="#9CA3AF" />
-          <YAxis allowDecimals={false} />
-          <Tooltip />
-          <Line type="monotone" dataKey="reports" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 4 }} />
-        </LineChart>
-      ) : (
-        <BarChart data={data}>
-          <XAxis dataKey="name" stroke="#9CA3AF" />
-          <YAxis allowDecimals={false} />
-          <Tooltip />
-          <Bar dataKey="reports" fill="#8B5CF6" radius={[5, 5, 0, 0]} />
-        </BarChart>
-      )}
-    </ResponsiveContainer>
+    {data && data.length > 0 ? (
+      <ResponsiveContainer width="100%" height={250}>
+        {type === "line" ? (
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="name" stroke="#9CA3AF" />
+            <YAxis allowDecimals={false} />
+            <Tooltip />
+            <Line type="monotone" dataKey="reports" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 4 }} />
+          </LineChart>
+        ) : (
+          <BarChart data={data}>
+            <XAxis dataKey="name" stroke="#9CA3AF" />
+            <YAxis allowDecimals={false} />
+            <Tooltip />
+            <Bar dataKey="reports" fill="#8B5CF6" radius={[5, 5, 0, 0]} />
+          </BarChart>
+        )}
+      </ResponsiveContainer>
+    ) : (
+      <div className="h-[250px] flex items-center justify-center text-gray-500">
+        {emptyMessage}
+      </div>
+    )}
   </motion.div>
 );
 

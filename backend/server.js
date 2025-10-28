@@ -6,6 +6,7 @@ import cors from "cors";
 import connectDB from "./src/config/db.js";
 import { userRoutes } from "./src/routes/userRoutes.js";
 import { complaintRoutes } from "./src/routes/complaintRoutes.js";
+import { analyticsRoutes } from "./src/routes/analyticsRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -26,6 +27,7 @@ app.use(express.json());
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/complaints", complaintRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // Error handler to return JSON instead of HTML
 // eslint-disable-next-line no-unused-vars
