@@ -106,11 +106,11 @@ export default function AnalyticsPage() {
               Track your reporting activity and performance
             </p>
           </div>
-          <select className="border border-gray-300 rounded-md text-gray-600 text-sm px-3 py-2 focus:outline-none hover:border-indigo-400 transition">
+          {/* <select className="border border-gray-300 rounded-md text-gray-600 text-sm px-3 py-2 focus:outline-none hover:border-indigo-400 transition">
             <option>6 Months</option>
             <option>12 Months</option>
             <option>All Time</option>
-          </select>
+          </select> */}
         </motion.div>
 
         {isLoading ? (
