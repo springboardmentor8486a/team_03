@@ -86,14 +86,14 @@ const CommunityReports = () => {
 
           {/* Search + Report Button */}
           <div className="flex items-center gap-4">
-            <div className="relative hidden sm:block">
+            {/* <div className="relative hidden sm:block">
               <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search community reports..."
                 className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none w-64"
               />
-            </div>
+            </div> */}
             <button
               onClick={() => navigate('/reportissue')}
               className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-purple-700 transition-all shadow-sm"
@@ -131,10 +131,10 @@ const CommunityReports = () => {
             whileHover={{ scale: 1.02 }}
             className="bg-white shadow rounded-xl p-4 flex justify-between items-center border border-gray-100"
           >
-            <div>
+            {/* <div>
               <p className="text-gray-600 text-sm">In Progress</p>
               <h3 className="text-2xl font-semibold mt-1">{reports.filter(r => r.status === 'In Progress').length}</h3>
-            </div>
+            </div> */}
             <div className="text-orange-500 bg-orange-100 p-3 rounded-lg">
               <FiTrendingUp size={22} />
             </div>
@@ -156,7 +156,7 @@ const CommunityReports = () => {
       </div>
 
       {/* 🔍 Filters */}
-      <div className="max-w-7xl mx-auto w-full px-6 mt-6">
+      {/* <div className="max-w-7xl mx-auto w-full px-6 mt-6">
         <div className="bg-white shadow-sm rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 border border-gray-100">
           <select className="border border-gray-200 rounded-lg px-4 py-2 text-gray-700 focus:ring-2 focus:ring-purple-500 focus:outline-none">
             <option>All Status</option>
@@ -171,7 +171,7 @@ const CommunityReports = () => {
             <option>Most Liked</option>
           </select>
         </div>
-      </div>
+      </div> */}
 
       {/* 🧾 Reports Grid */}
       <div className="max-w-7xl mx-auto w-full px-6 mt-6 pb-10">
