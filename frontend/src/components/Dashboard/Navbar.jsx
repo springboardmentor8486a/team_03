@@ -21,11 +21,11 @@ export default function Navbar() {
       {/* Right Section */}
       <div className="flex items-center space-x-5">
         {/* Search */}
-        <input
+        {/* <input
           type="text"
           placeholder="Search reports, locations..."
           className="border rounded-lg px-4 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        />
+        /> */}
 
         
 

@@ -44,6 +44,7 @@ export default function AdminUserManagement() {
     try {
       const { data } = await axiosInstance.get("/users/admin/users");
       setUsers(Array.isArray(data) ? data : data.users || []);
+      sessionStorage.setItem("userlength", data.length);
     } catch (err) {
       console.error(err);
       if (err.response && err.response.status === 403) {

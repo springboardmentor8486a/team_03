@@ -4,8 +4,6 @@ import { motion } from "framer-motion";
 import {
   Eye,
   FilePlus2,
-  MessageSquare,
-  ThumbsUp,
   FileText,
   Clock,
   Activity,
@@ -16,33 +14,29 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Footer from "./DashFooter";
-import ViewDetails from "./ViewDetails";
 
 export default function MyReports() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All Status");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("All");
   const navigate = useNavigate();
 
-  // ✅ Token Retrieval
+  // ✅ Simplified Token Retrieval
   const getToken = () => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (token) return token;
-
-    const user = localStorage.getItem("user") || sessionStorage.getItem("user");
-    if (user) {
-      try {
-        return JSON.parse(user).token;
-      } catch (err) {
-        console.error("Error parsing user:", err);
-        return null;
-      }
+    try {
+      return (
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token") ||
+        JSON.parse(localStorage.getItem("user") || "{}").token ||
+        JSON.parse(sessionStorage.getItem("user") || "{}").token ||
+        null
+      );
+    } catch {
+      return null;
     }
-    return null;
   };
 
   // ✅ Fetch Complaints from Backend
@@ -86,38 +80,75 @@ export default function MyReports() {
     fetchComplaints();
   }, [fetchComplaints]);
 
-  // ✅ UI Filters
-  const tabs = ["All", "Submitted", "In Review", "In Progress", "Resolved", "Rejected"];
+  // ✅ Tabs & Category Options
+  const tabs = ["All", "Submitted", "In Review", "In Progress", "Resolved", "Closed"];
   const categories = [
     "All Categories",
     "Infrastructure",
     "Roads",
-    "Sanitation",
-    "Parks",
-    "Vandalism",
-    "Water Issues",
+    "Public Safety",
+    "Environment",
+    "Public Transport",
+    "Other",
   ];
-  const statuses = ["All Status", "Submitted", "In Review", "In Progress", "Resolved", "Rejected"];
 
-  // ✅ Filtered Complaints
+  // ✅ Dynamic Filtering Logic
   const filteredReports = complaints.filter((r) => {
-    const matchesSearch = r.title?.toLowerCase().includes(searchQuery.toLowerCase());
+    const normalize = (val) => val?.toLowerCase().trim();
+
+    const matchesSearch = normalize(r.title || "").includes(normalize(searchQuery));
     const matchesCategory =
-      categoryFilter === "All Categories" || r.category === categoryFilter;
+      categoryFilter === "All Categories" ||
+      normalize(r.category) === normalize(categoryFilter);
     const matchesStatus =
-      (statusFilter === "All Status" || r.status === statusFilter) &&
-      (activeTab === "All" || r.status === activeTab);
+      activeTab === "All" || normalize(r.status) === normalize(activeTab);
+
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  // ✅ Summary Cards (static or can be dynamic in future)
+  // ✅ Dynamic Summary Counts
+  const statusCounts = complaints.reduce((acc, r) => {
+    acc[r.status] = (acc[r.status] || 0) + 1;
+    return acc;
+  }, {});
+
   const summaryCards = [
-    { label: "Total", value: `${complaints.length} reports`, color: "from-purple-500 to-indigo-500", icon: <FileText /> },
-    { label: "Submitted", value: "1 new", color: "from-blue-500 to-sky-500", icon: <FileCheck2 /> },
-    { label: "In Review", value: "1 pending", color: "from-yellow-500 to-amber-400", icon: <Clock /> },
-    { label: "In Progress", value: "2 active", color: "from-orange-500 to-pink-500", icon: <Activity /> },
-    { label: "Resolved", value: "1 done", color: "from-green-500 to-emerald-400", icon: <CheckCircle2 /> },
-    { label: "Rejected", value: "1 closed", color: "from-red-500 to-rose-500", icon: <XCircle /> },
+    {
+      label: "Total",
+      value: `${complaints.length} reports`,
+      color: "from-purple-500 to-indigo-500",
+      icon: <FileText />,
+    },
+    {
+      label: "Submitted",
+      value: `${statusCounts["Submitted"] || 0} new`,
+      color: "from-blue-500 to-sky-500",
+      icon: <FileCheck2 />,
+    },
+    {
+      label: "In Review",
+      value: `${statusCounts["In Review"] || 0} pending`,
+      color: "from-yellow-500 to-amber-400",
+      icon: <Clock />,
+    },
+    {
+      label: "In Progress",
+      value: `${statusCounts["In Progress"] || 0} active`,
+      color: "from-orange-500 to-pink-500",
+      icon: <Activity />,
+    },
+    {
+      label: "Resolved",
+      value: `${statusCounts["Resolved"] || 0} done`,
+      color: "from-green-500 to-emerald-400",
+      icon: <CheckCircle2 />,
+    },
+    {
+      label: "Closed",
+      value: `${statusCounts["Closed"] || 0} closed`,
+      color: "from-red-500 to-rose-500",
+      icon: <XCircle />,
+    },
   ];
 
   const priorityColors = {
@@ -163,7 +194,9 @@ export default function MyReports() {
               whileHover={{ scale: 1.03 }}
               className={`bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4`}
             >
-              <div className={`p-3 rounded-lg bg-gradient-to-r ${item.color} text-white shadow`}>
+              <div
+                className={`p-3 rounded-lg bg-gradient-to-r ${item.color} text-white shadow`}
+              >
                 {item.icon}
               </div>
               <div>
@@ -181,10 +214,11 @@ export default function MyReports() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 ${activeTab === tab
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 ${
+                  activeTab === tab
                     ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md"
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
-                  }`}
+                }`}
               >
                 {tab}
               </button>
@@ -199,15 +233,6 @@ export default function MyReports() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-gray-700"
             />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-gray-700"
-            >
-              {statuses.map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </select>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
@@ -226,14 +251,18 @@ export default function MyReports() {
         ) : error ? (
           <p className="text-center text-red-500 mt-10">{error}</p>
         ) : filteredReports.length === 0 ? (
-          <p className="text-gray-500 italic text-center mt-10">No reports found.</p>
+          <div className="text-center mt-20">
+            <FileText className="mx-auto text-gray-400" size={40} />
+            <p className="text-gray-500 mt-3 italic">No reports found for this filter.</p>
+          </div>
         ) : (
           filteredReports.map((r) => (
             <motion.div
               key={r._id}
               layout
-              whileHover={{ scale: 1.01 }}
-              className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition"
+              whileHover={{ scale: 1.02, boxShadow: "0 4px 14px rgba(0,0,0,0.1)" }}
+              className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition cursor-pointer"
+              onClick={() => navigate(`/reports/${r._id}`)}
             >
               <div className="flex flex-wrap gap-3 items-center">
                 <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-semibold rounded-full">
@@ -243,9 +272,10 @@ export default function MyReports() {
                   {r.category}
                 </span>
                 <span
-                  className={`px-3 py-1 text-sm font-semibold rounded-full border ${priorityColors[r.priority] ||
+                  className={`px-3 py-1 text-sm font-semibold rounded-full border ${
+                    priorityColors[r.priority] ||
                     "bg-gray-100 text-gray-700 border-gray-300"
-                    }`}
+                  }`}
                 >
                   {r.priority}
                 </span>
@@ -261,31 +291,17 @@ export default function MyReports() {
                 </div>
                 <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
                   <p className="text-sm text-gray-500">Submitted</p>
-                  <p className="font-medium text-gray-800">{r.createdAt?.split("T")[0]}</p>
+                  <p className="font-medium text-gray-800">
+                    {r.createdAt?.split("T")[0]}
+                  </p>
                 </div>
                 <div className="bg-orange-50 border border-orange-100 rounded-lg p-3">
                   <p className="text-sm text-gray-500">Last Update</p>
-                  <p className="font-medium text-gray-800">{r.updatedAt?.split("T")[0]}</p>
+                  <p className="font-medium text-gray-800">
+                    {r.updatedAt?.split("T")[0]}
+                  </p>
                 </div>
               </div>
-
-              {/* <div className="flex justify-between items-center mt-5">
-                <div className="flex gap-5 text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <MessageSquare size={18} /> {r.comments?.length || 0}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <ThumbsUp size={18} /> {r.likes || 0}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => navigate(`/view-details/${r._id}`, { state: r })}
-                  className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium transition"
-                >
-                  <Eye size={18} /> View Details
-                </button>
-              </div> */}
             </motion.div>
           ))
         )}
