@@ -22,27 +22,46 @@ import UpdateReport from "./UpdateReport";
 export default function ViewDetails() {
   const location = useLocation();
   const navigate = useNavigate();
-  const complaint = location.state;
   const BACKEND_URL = "http://localhost:5000/api";
-
   const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
   const loggedInUserId = sessionStorage.getItem("_id") || localStorage.getItem("_id") || "";
   const role = sessionStorage.getItem("role") || localStorage.getItem("role") || "";
 
+  // Get complaint from navigation state or fetch by ID
+  const [complaint, setComplaint] = useState(location.state || null);
+  const [loadingComplaint, setLoadingComplaint] = useState(!location.state);
   const [upvotes, setUpvotes] = useState(complaint?.votes || 0);
   const [downvotes, setDownvotes] = useState(complaint?.downvotes || 0);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [modalIsOpen, setModalIsOpen] = useState(false);
 
-  // Safety check - if no complaint data, redirect back
+  // Fetch complaint by ID if not present in state
   useEffect(() => {
-    if (!complaint || !complaint._id) {
-      console.error("No complaint data found. Redirecting to dashboard...");
-      alert("No complaint data found. Please navigate from the dashboard.");
-      navigate("/dashboard");
+    if (!complaint) {
+      const params = new URLSearchParams(location.search);
+      const id = params.get("id");
+      if (id) {
+        setLoadingComplaint(true);
+        axios.get(`${BACKEND_URL}/complaints/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(res => {
+            setComplaint(res.data.data);
+            setUpvotes(res.data.data.votes || 0);
+            setDownvotes(res.data.data.downvotes || 0);
+          })
+          .catch(err => {
+            alert("No complaint data found. Please navigate from the dashboard.");
+            navigate("/dashboard");
+          })
+          .finally(() => setLoadingComplaint(false));
+      } else {
+        alert("No complaint data found. Please navigate from the dashboard.");
+        navigate("/dashboard");
+      }
     }
-  }, [complaint, navigate]);
+  }, [complaint, location.search, navigate, token]);
 
   const fetchComments = useCallback(async () => {
     if (!complaint?._id) {
@@ -70,8 +89,10 @@ export default function ViewDetails() {
   }, [BACKEND_URL, complaint?._id, token]);
 
   useEffect(() => {
-    fetchComments();
-  }, [fetchComments]);
+    if (complaint && complaint._id) {
+      fetchComments();
+    }
+  }, [fetchComments, complaint]);
 
   const handleVote = async (type) => {
     try {
@@ -187,7 +208,7 @@ export default function ViewDetails() {
   };
 
   // If no complaint, show loading or redirect
-  if (!complaint || !complaint._id) {
+  if (loadingComplaint || !complaint || !complaint._id) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
         <div className="text-center">
