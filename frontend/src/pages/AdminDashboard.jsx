@@ -31,7 +31,7 @@ export default function AdminDashboard() {
     resolutionRate: 0,
   });
 
-  const [userCount, setUserCount] = useState(0);
+  // const [userCount, setUserCount] = useState(0);
   const [resolutionRate, setResolutionRate] = useState(0);
 
   const [selectedComplaint, setSelectedComplaint] = useState(null);
@@ -87,28 +87,12 @@ export default function AdminDashboard() {
   }, []);
 
   // ✅ Fetch user count
-  const fetchUsers = useCallback(async () => {
-    try {
-      const token =
-        localStorage.getItem("token") || sessionStorage.getItem("token");
-      const { data } = await axios.get(
-        "http://127.0.0.1:5000/users/admin/users",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const users = Array.isArray(data) ? data : data.users || [];
-      setUserCount(users.length);
-      sessionStorage.setItem("userlength", users.length);
-    } catch (err) {
-      console.error("Error fetching users:", err);
-    }
-  }, []);
+  
 
   useEffect(() => {
     fetchReports();
-    fetchUsers();
-  }, [fetchReports, fetchUsers]);
+
+  }, [fetchReports]);
 
   // ✅ Handle Status Update from Dashboard
   const handleStatusUpdate = (complaint) => {
@@ -122,14 +106,9 @@ export default function AdminDashboard() {
   };
 
   const handleComplaintUpdated = (updatedComplaint) => {
-    // Update complaint in the list
     setReports((prev) =>
-      prev.map((r) =>
-        r._id === updatedComplaint._id ? updatedComplaint : r
-      )
+      prev.map((r) => (r._id === updatedComplaint._id ? updatedComplaint : r))
     );
-
-    // Update stats again
     fetchReports();
   };
 
@@ -210,7 +189,7 @@ export default function AdminDashboard() {
                     <AdminReportCard
                       key={report._id || report.id}
                       report={report}
-                      onStatusUpdate={handleStatusUpdate} // ✅ Added update handler
+                      onStatusUpdate={handleStatusUpdate}
                     />
                   ))}
                 </div>
@@ -227,7 +206,7 @@ export default function AdminDashboard() {
                   <div className="flex justify-between items-center">
                     <span>User Count</span>
                     <span className="font-semibold text-gray-900">
-                      {userCount}
+                      {sessionStorage.getItem("userlength") || 0}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -236,6 +215,29 @@ export default function AdminDashboard() {
                       {resolutionRate}%
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* Status Overview */}
+              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                  Status Overview
+                </h2>
+                <div className="space-y-3 text-sm text-gray-700">
+                  {[
+                    { label: "Resolved", value: stats.resolved, color: "bg-green-500" },
+                    { label: "In Progress", value: stats.inProgress, color: "bg-yellow-500" },
+                    { label: "Rejected", value: stats.rejected, color: "bg-red-500" },
+                    { label: "Total Reports", value: stats.totalReports, color: "bg-purple-500" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex justify-between items-center">
+                      <span className="flex items-center gap-2">
+                        <span className={`w-3 h-3 rounded-full ${item.color}`}></span>
+                        {item.label}
+                      </span>
+                      <span className="font-semibold">{item.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
