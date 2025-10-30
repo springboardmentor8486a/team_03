@@ -1,6 +1,7 @@
 import React from "react";
 import AdminSidebar from "../components/AdminDashboard/AdminSidebar";
 import AdminNavbar from "../components/AdminDashboard/AdminNavbar";
+import Analytics from "../components/Dashboard/Analytics";
 
 export default function AdminAnalytics() {
   return (
@@ -9,8 +10,8 @@ export default function AdminAnalytics() {
       <div className="flex flex-col flex-1 overflow-hidden">
         <AdminNavbar />
         <main className="flex-1 overflow-y-auto p-6">
-          <h1 className="text-2xl font-bold mb-4">Analytics</h1>
-          <p className="text-gray-600">Analytics and charts will be placed here.</p>
+          
+          <Analytics />
         </main>
       </div>
     </div>
