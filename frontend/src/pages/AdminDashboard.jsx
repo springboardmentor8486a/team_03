@@ -23,6 +23,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const [totalReports, setTotalReports] = useState(0);
   const [stats, setStats] = useState({
     totalReports: 0,
     resolved: 0,
@@ -49,45 +50,50 @@ export default function AdminDashboard() {
 
   // ✅ Fetch complaints (dashboard overview)
   const fetchReports = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const token =
-        localStorage.getItem("token") || sessionStorage.getItem("token");
-      const res = await axios.get(
-        "http://localhost:5000/api/complaints/admin/list?page=1&limit=5",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  try {
+    setLoading(true);
+    setError("");
 
-      const data = res.data.data || [];
-      setReports(data);
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
 
-      const resolved = data.filter((r) => r.status === "Resolved").length;
-      const inProgress = data.filter((r) => r.status === "In Progress").length;
-      const rejected = data.filter((r) => r.status === "Rejected").length;
-      const total = data.length;
-      const rate = total ? ((resolved / total) * 100).toFixed(1) : 0;
+    // ✅ Fetch both overall stats and recent complaints in parallel
+    const [overallRes, recentRes] = await Promise.all([
+      axios.get("http://localhost:5000/api/analytics/overall", config),
+      axios.get(
+        "http://localhost:5000/api/complaints/admin/list?page=1&limit=6",
+        config
+      ),
+    ]);
 
-      setStats({
-        totalReports: total,
-        resolved,
-        inProgress,
-        rejected,
-        resolutionRate: rate,
-      });
-      setResolutionRate(rate);
-    } catch (err) {
-      console.error("Error fetching reports:", err);
-      setError("Failed to fetch complaints. Make sure the backend is running.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    // ✅ Set accurate total stats from analytics
+    const overallData = overallRes.data.data || {};
+    setTotalReports(overallData.totalReports || 0);
+    setStats({
+      resolved: overallData.resolved || 0,
+      inProgress: overallData.inProgress || 0,
+      rejected: overallData.rejected || 0,
+      resolutionRate: overallData.resolutionRate || 0,
+    });
+    setResolutionRate(overallData.resolutionRate || 0);
+
+    // ✅ Set latest 6 reports for table
+    setReports(recentRes.data.data || []);
+  } catch (err) {
+    console.error("Error fetching reports:", err);
+    setError("Failed to fetch complaints. Make sure the backend is running.");
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
+
 
   // ✅ Fetch user count
-  
+
 
   useEffect(() => {
     fetchReports();
@@ -136,7 +142,8 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <AdminStatCard
               title="Total Reports"
-              value={stats.totalReports}
+              value={totalReports}
+              subtitle="Reports filed"
               color="from-purple-500 to-purple-600"
               icon={<FiFileText size={24} />}
             />
@@ -150,12 +157,14 @@ export default function AdminDashboard() {
             <AdminStatCard
               title="In Progress"
               value={stats.inProgress}
+              subtitle="Ongoing reports"
               color="from-blue-500 to-blue-600"
               icon={<FiClock size={24} />}
             />
             <AdminStatCard
               title="Rejected"
               value={stats.rejected}
+              subtitle="Invalid reports"
               color="from-red-500 to-red-600"
               icon={<FiAlertTriangle size={24} />}
             />
@@ -228,7 +237,7 @@ export default function AdminDashboard() {
                     { label: "Resolved", value: stats.resolved, color: "bg-green-500" },
                     { label: "In Progress", value: stats.inProgress, color: "bg-yellow-500" },
                     { label: "Rejected", value: stats.rejected, color: "bg-red-500" },
-                    { label: "Total Reports", value: stats.totalReports, color: "bg-purple-500" },
+                    { label: "Total Reports", value: totalReports, color: "bg-purple-500" },
                   ].map((item) => (
                     <div key={item.label} className="flex justify-between items-center">
                       <span className="flex items-center gap-2">

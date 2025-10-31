@@ -131,10 +131,10 @@ const CommunityReports = () => {
             whileHover={{ scale: 1.02 }}
             className="bg-white shadow rounded-xl p-4 flex justify-between items-center border border-gray-100"
           >
-            {/* <div>
+            <div>
               <p className="text-gray-600 text-sm">In Progress</p>
               <h3 className="text-2xl font-semibold mt-1">{reports.filter(r => r.status === 'In Progress').length}</h3>
-            </div> */}
+            </div>
             <div className="text-orange-500 bg-orange-100 p-3 rounded-lg">
               <FiTrendingUp size={22} />
             </div>
