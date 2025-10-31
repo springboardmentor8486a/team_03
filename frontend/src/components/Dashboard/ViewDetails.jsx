@@ -51,7 +51,7 @@ export default function ViewDetails() {
             setUpvotes(res.data.data.votes || 0);
             setDownvotes(res.data.data.downvotes || 0);
           })
-          .catch(err => {
+          .catch(() => {
             alert("No complaint data found. Please navigate from the dashboard.");
             navigate("/dashboard");
           })
@@ -271,6 +271,10 @@ export default function ViewDetails() {
                   <span className="px-4 py-2 text-sm font-semibold bg-purple-100 text-purple-800 rounded-full flex items-center gap-2 border border-purple-200">
                     <FiTag className="text-base" />
                     {complaint.category}
+                  </span>
+                   <span className="px-4 py-2 text-sm font-semibold bg-purple-100 text-purple-800 rounded-full flex items-center gap-2 border border-purple-200">
+                    <FiTag className="text-base" />
+                    {complaint.category} Assigned Department
                   </span>
                 </div>
 

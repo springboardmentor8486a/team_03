@@ -1,4 +1,4 @@
-import { FiEdit, FiEye, FiMapPin } from "react-icons/fi";
+import { FiEye, FiMapPin } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUtils";
 
@@ -11,7 +11,6 @@ export default function ReportCard({ complaint }) {
     location,
     status,
     description,
-    assignedTo,
     photo
   } = complaint;
 
@@ -97,9 +96,9 @@ export default function ReportCard({ complaint }) {
       {/* Footer */}
       <div className="mt-6 flex flex-col gap-1 text-xs text-gray-500 text-left">
         <span>Submitted: {formatDate(complaint.createdAt) || 'N/A'}</span>
-        <span className={`${assignedTo === 'Unassigned' ? 'text-orange-600' : 'text-gray-500'}`}>
+        {/* <span className={`${assignedTo === 'Unassigned' ? 'text-orange-600' : 'text-gray-500'}`}>
           Assigned to: {assignedTo || 'Unassigned'}
-        </span>
+        </span> */}
       </div>
 
       {/* Action Buttons */}
