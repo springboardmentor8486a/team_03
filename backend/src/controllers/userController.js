@@ -158,7 +158,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
   await user.save();
 
   // Generate a JWT token for reset-password URL
-  const resetToken = generateToken(user._id);
+ const resetToken = generateToken({ id: user._id });
 
   res.json({
     message: "OTP verified. You can reset your password now.",
@@ -246,7 +246,10 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     }
   });
 
-  if (req.file) user.photo = req.file.filename;
+  // Save Cloudinary URL if photo uploaded
+  if (req.file && req.file.path) {
+    user.photo = req.file.path;
+  }
 
   const updatedUser = await user.save();
   const userResponse = updatedUser.toObject();

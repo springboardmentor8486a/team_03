@@ -78,7 +78,7 @@ export default function Sidebar() {
         </NavLink>
 
         <NavLink
-          to="/community"
+          to="/communitys"
           className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <Users size={26} />

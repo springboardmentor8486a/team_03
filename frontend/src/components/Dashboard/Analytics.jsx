@@ -14,7 +14,7 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import Footer from "../components/AdminDashboard/AdminFooter";
+import Footer from "./DashFooter";
 import { FiArrowLeftCircle } from "react-icons/fi";
 
 export default function AnalyticsPage() {
@@ -75,7 +75,7 @@ export default function AnalyticsPage() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           {/* Back to Dashboard */}
           <button
-            onClick={() => navigate("/admin/dashboard ")}
+            onClick={() => navigate("/dashboard")}
             className="flex items-center gap-2 text-indigo-600 font-semibold hover:text-indigo-700 transition"
           >
             <FiArrowLeftCircle size={20} />

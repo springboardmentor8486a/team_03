@@ -22,27 +22,46 @@ import UpdateReport from "./UpdateReport";
 export default function ViewDetails() {
   const location = useLocation();
   const navigate = useNavigate();
-  const complaint = location.state;
   const BACKEND_URL = "http://localhost:5000/api";
-
   const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
   const loggedInUserId = sessionStorage.getItem("_id") || localStorage.getItem("_id") || "";
   const role = sessionStorage.getItem("role") || localStorage.getItem("role") || "";
 
+  // Get complaint from navigation state or fetch by ID
+  const [complaint, setComplaint] = useState(location.state || null);
+  const [loadingComplaint, setLoadingComplaint] = useState(!location.state);
   const [upvotes, setUpvotes] = useState(complaint?.votes || 0);
   const [downvotes, setDownvotes] = useState(complaint?.downvotes || 0);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [modalIsOpen, setModalIsOpen] = useState(false);
 
-  // Safety check - if no complaint data, redirect back
+  // Fetch complaint by ID if not present in state
   useEffect(() => {
-    if (!complaint || !complaint._id) {
-      console.error("No complaint data found. Redirecting to dashboard...");
-      alert("No complaint data found. Please navigate from the dashboard.");
-      navigate("/dashboard");
+    if (!complaint) {
+      const params = new URLSearchParams(location.search);
+      const id = params.get("id");
+      if (id) {
+        setLoadingComplaint(true);
+        axios.get(`${BACKEND_URL}/complaints/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(res => {
+            setComplaint(res.data.data);
+            setUpvotes(res.data.data.votes || 0);
+            setDownvotes(res.data.data.downvotes || 0);
+          })
+          .catch(() => {
+            alert("No complaint data found. Please navigate from the dashboard.");
+            navigate("/dashboard");
+          })
+          .finally(() => setLoadingComplaint(false));
+      } else {
+        alert("No complaint data found. Please navigate from the dashboard.");
+        navigate("/dashboard");
+      }
     }
-  }, [complaint, navigate]);
+  }, [complaint, location.search, navigate, token]);
 
   const fetchComments = useCallback(async () => {
     if (!complaint?._id) {
@@ -70,8 +89,10 @@ export default function ViewDetails() {
   }, [BACKEND_URL, complaint?._id, token]);
 
   useEffect(() => {
-    fetchComments();
-  }, [fetchComments]);
+    if (complaint && complaint._id) {
+      fetchComments();
+    }
+  }, [fetchComments, complaint]);
 
   const handleVote = async (type) => {
     try {
@@ -187,7 +208,7 @@ export default function ViewDetails() {
   };
 
   // If no complaint, show loading or redirect
-  if (!complaint || !complaint._id) {
+  if (loadingComplaint || !complaint || !complaint._id) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
         <div className="text-center">
@@ -211,7 +232,7 @@ export default function ViewDetails() {
               <FiArrowLeft className="text-xl" />
               <span className="text-base">Back to Dashboard</span>
             </button>
-            {role === "user" && (
+            {role === "admin" && (
               <button
                 onClick={() => setModalIsOpen(true)}
                 className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-md hover:shadow-lg"
@@ -250,6 +271,10 @@ export default function ViewDetails() {
                   <span className="px-4 py-2 text-sm font-semibold bg-purple-100 text-purple-800 rounded-full flex items-center gap-2 border border-purple-200">
                     <FiTag className="text-base" />
                     {complaint.category}
+                  </span>
+                   <span className="px-4 py-2 text-sm font-semibold bg-purple-100 text-purple-800 rounded-full flex items-center gap-2 border border-purple-200">
+                    <FiTag className="text-base" />
+                    {complaint.category} Assigned Department
                   </span>
                 </div>
 
@@ -317,7 +342,7 @@ export default function ViewDetails() {
             </div>
 
             {/* Admin Response Section */}
-            {complaint.adminResponse && (
+            {(complaint.adminResponse || complaint.adminNotes) && (
               <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl shadow-lg border border-purple-200 p-6">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="bg-purple-600 text-white p-2 rounded-lg">
@@ -325,9 +350,27 @@ export default function ViewDetails() {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Admin Response</h3>
                 </div>
-                <p className="text-gray-800 leading-relaxed">
-                  {complaint.adminResponse || "Thank you for submitting the complaint. It will be reviewed shortly!"}
-                </p>
+                {complaint.adminNotes && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-purple-700 mb-2">Latest Update:</h4>
+                    <p className="text-gray-800 leading-relaxed bg-white p-4 rounded-lg border border-purple-200">
+                      {complaint.adminNotes}
+                    </p>
+                  </div>
+                )}
+                {complaint.adminResponse && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-purple-700 mb-2">General Response:</h4>
+                    <p className="text-gray-800 leading-relaxed">
+                      {complaint.adminResponse}
+                    </p>
+                  </div>
+                )}
+                {!complaint.adminNotes && !complaint.adminResponse && (
+                  <p className="text-gray-800 leading-relaxed">
+                    Thank you for submitting the complaint. It will be reviewed shortly!
+                  </p>
+                )}
               </div>
             )}
 

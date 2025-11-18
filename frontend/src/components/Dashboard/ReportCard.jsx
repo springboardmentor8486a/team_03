@@ -1,4 +1,4 @@
-import { FiEdit, FiEye, FiMapPin } from "react-icons/fi";
+import { FiEye, FiMapPin } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUtils";
 
@@ -11,8 +11,6 @@ export default function ReportCard({ complaint }) {
     location,
     status,
     description,
-    submitted,
-    assignedTo,
     photo
   } = complaint;
 
@@ -22,6 +20,13 @@ export default function ReportCard({ complaint }) {
     Resolved: "bg-green-100 text-green-700",
     Rejected: "bg-red-100 text-red-700",
     Pending: "bg-purple-100 text-purple-700",
+  };
+ const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   const priorityColors = {
@@ -90,10 +95,10 @@ export default function ReportCard({ complaint }) {
 
       {/* Footer */}
       <div className="mt-6 flex flex-col gap-1 text-xs text-gray-500 text-left">
-        <span>Submitted: {submitted || 'N/A'}</span>
-        <span className={`${assignedTo === 'Unassigned' ? 'text-orange-600' : 'text-gray-500'}`}>
+        <span>Submitted: {formatDate(complaint.createdAt) || 'N/A'}</span>
+        {/* <span className={`${assignedTo === 'Unassigned' ? 'text-orange-600' : 'text-gray-500'}`}>
           Assigned to: {assignedTo || 'Unassigned'}
-        </span>
+        </span> */}
       </div>
 
       {/* Action Buttons */}
@@ -102,9 +107,9 @@ export default function ReportCard({ complaint }) {
           onClick={handleViewDetails}>
           <FiEye /> View Details
         </button>
-        <button className="flex items-center gap-2 px-4 py-2 text-sm border rounded-md hover:bg-gray-100 transition">
+        {/* <button className="flex items-center gap-2 px-4 py-2 text-sm border rounded-md hover:bg-gray-100 transition">
           <FiEdit /> Update
-        </button>
+        </button> */}
       </div>
     </div>
   );

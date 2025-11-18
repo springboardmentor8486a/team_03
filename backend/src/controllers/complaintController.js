@@ -154,6 +154,100 @@ export const adminGetAllComplaints = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Admin: Update complaint status
+// @route   PUT /api/complaints/admin/:id/status
+// @access  Private (admin)
+export const adminUpdateComplaintStatus = asyncHandler(async (req, res) => {
+  try {
+    const { status, adminNotes, assignedTo } = req.body;
+    const complaintId = req.params.id;
+
+    // Validate status
+    const validStatuses = ["Received", "In Review", "In Progress", "Resolved", "Closed"];
+    if (!status || !validStatuses.includes(status)) {
+      res.status(400);
+      throw new Error(`Status must be one of: ${validStatuses.join(", ")}`);
+    }
+
+    // Find the complaint
+    const complaint = await Complaint.findById(complaintId);
+    if (!complaint) {
+      res.status(404);
+      throw new Error("Complaint not found");
+    }
+
+    // Prepare update data
+    const updateData = {
+      status,
+      updatedAt: new Date()
+    };
+
+    // Add admin notes if provided
+    if (adminNotes && adminNotes.trim()) {
+      updateData.adminNotes = adminNotes.trim();
+    }
+
+    // Handle assignment
+    if (assignedTo) {
+      if (assignedTo.userId) {
+        // Validate the assigned user exists
+        const assignedUser = await User.findById(assignedTo.userId);
+        if (!assignedUser) {
+          res.status(400);
+          throw new Error("Assigned user not found");
+        }
+        updateData.assignedTo = {
+          userId: assignedTo.userId,
+          name: assignedTo.name || assignedUser.name,
+          assignedAt: new Date()
+        };
+      } else {
+        // Clear assignment if no userId provided
+        updateData.assignedTo = null;
+      }
+    }
+
+    // Handle resolved status - set resolvedAt and update user stats
+    if (status === "Resolved" && complaint.status !== "Resolved") {
+      updateData.resolvedAt = new Date();
+      
+      // Update user's resolved reports count
+      await User.findByIdAndUpdate(complaint.reportedBy, {
+        $inc: { "stats.resolvedReports": 1 }
+      });
+    } else if (status !== "Resolved" && complaint.status === "Resolved") {
+      // If changing from Resolved to another status, remove resolvedAt and decrement counter
+      updateData.resolvedAt = null;
+      
+      await User.findByIdAndUpdate(complaint.reportedBy, {
+        $inc: { "stats.resolvedReports": -1 }
+      });
+    }
+
+    // Update the complaint
+    const updatedComplaint = await Complaint.findByIdAndUpdate(
+      complaintId,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate("reportedBy", "name email");
+
+    res.status(200).json({
+      success: true,
+      message: `Complaint status updated to ${status}`,
+      data: updatedComplaint
+    });
+
+  } catch (error) {
+    console.error("Error updating complaint status:", error);
+    if (error.name === "CastError") {
+      res.status(404);
+      throw new Error("Complaint not found");
+    }
+    res.status(500);
+    throw new Error("Failed to update complaint status");
+  }
+});
+
 // @desc    Get single complaint
 // @route   GET /api/complaints/:id
 // @access  Private

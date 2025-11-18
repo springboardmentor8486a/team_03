@@ -163,53 +163,53 @@ export default function Profile() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!window.confirm("Are you sure you want to permanently delete your account?")) return;
+  // const handleDeleteAccount = async () => {
+  //   if (!window.confirm("Are you sure you want to permanently delete your account?")) return;
 
-    const token = getAuthToken();
-    if (!token) {
-      navigate("/login");
-      return;
-    }
+  //   const token = getAuthToken();
+  //   if (!token) {
+  //     navigate("/login");
+  //     return;
+  //   }
 
-    try {
-      await axios.delete("http://localhost:5000/api/users/profile", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      localStorage.removeItem("token");
-      sessionStorage.removeItem("token");
-      alert("Account deleted successfully!");
-      navigate("/login");
-    } catch (err) {
-      console.error("Error deleting account:", err);
-      setError("Failed to delete account. Please try again.");
-    }
-  };
+  //   try {
+  //     await axios.delete("http://localhost:5000/api/users/profile", {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  //     localStorage.removeItem("token");
+  //     sessionStorage.removeItem("token");
+  //     alert("Account deleted successfully!");
+  //     navigate("/login");
+  //   } catch (err) {
+  //     console.error("Error deleting account:", err);
+  //     setError("Failed to delete account. Please try again.");
+  //   }
+  // };
 
-  const handleExportData = async () => {
-    const token = getAuthToken();
-    if (!token) {
-      navigate("/login");
-      return;
-    }
+  // const handleExportData = async () => {
+  //   const token = getAuthToken();
+  //   if (!token) {
+  //     navigate("/login");
+  //     return;
+  //   }
 
-    try {
-      const response = await axios.get("http://localhost:5000/api/users/profile/export", {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "user_data.json");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (err) {
-      console.error("Error exporting data:", err);
-      setError("Failed to export data. Please try again.");
-    }
-  };
+  //   try {
+  //     const response = await axios.get("http://localhost:5000/api/users/profile/export", {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //       responseType: "blob",
+  //     });
+  //     const url = window.URL.createObjectURL(new Blob([response.data]));
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.setAttribute("download", "user_data.json");
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     link.remove();
+  //   } catch (err) {
+  //     console.error("Error exporting data:", err);
+  //     setError("Failed to export data. Please try again.");
+  //   }
+  // };
 
   if (loading)
     return (
@@ -335,7 +335,7 @@ export default function Profile() {
         
 
           {/* Danger Zone */}
-          <div className="bg-white p-6 rounded-lg shadow space-y-4">
+          {/* <div className="bg-white p-6 rounded-lg shadow space-y-4">
             <h3 className="flex items-center gap-2 text-red-600 font-semibold text-lg">
               <FiTrash2 /> Danger Zone
             </h3>
@@ -352,7 +352,7 @@ export default function Profile() {
                 Export
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

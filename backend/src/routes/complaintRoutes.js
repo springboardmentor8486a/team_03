@@ -10,7 +10,8 @@ import {
   getComments,
   deleteComment,
   voteComplaint,
-  adminGetAllComplaints
+  adminGetAllComplaints,
+  adminUpdateComplaintStatus
 } from "../controllers/complaintController.js";
 import { verifyToken, isAdmin } from "../middlewares/authMiddleware.js";
 
@@ -35,6 +36,9 @@ router.patch("/:id/vote", voteComplaint); // PATCH /api/complaints/:id/vote
 // Admin route - get all complaints (admin only)
 router.get("/admin/all", isAdmin, getAllComplaints); // legacy admin route (can use adminGetAllComplaints)
 router.get("/admin/list", isAdmin, adminGetAllComplaints);
+
+// Admin route - update complaint status (admin only)
+router.put("/admin/:id/status", isAdmin, adminUpdateComplaintStatus);
 
 // Comment Routes - must come before /:id
 router.route("/:id/comments")

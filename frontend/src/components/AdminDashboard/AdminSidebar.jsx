@@ -70,14 +70,14 @@ export default function AdminSidebar() {
           {isOpen && <span>User Management</span>}
         </NavLink>
 
-
+{/* 
         <NavLink
           to="/admin/departments"
           className={({ isActive }) => (isActive ? activeClass : normalClass)}
         >
           <Briefcase size={26} />
           {isOpen && <span>Departments</span>}
-        </NavLink>
+        </NavLink> */}
 
         <NavLink
           to="/admin/analytics"

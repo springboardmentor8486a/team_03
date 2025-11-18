@@ -2,20 +2,44 @@ import { FiMapPin, FiEye, FiEdit, FiCheckCircle } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageUtils";
 
-export default function AdminReportCard({ report }) {
+export default function AdminReportCard({ report, onStatusUpdate }) {
   const navigate = useNavigate();
-  const { title, location, date, status, photo, description } = report;
+  const { title, location, status, photo, description, submittedAt, createdAt } = report;
 
   const statusColors = {
-    Received: "bg-blue-100 text-blue-700",
-    "In Progress": "bg-yellow-100 text-yellow-700",
-    Resolved: "bg-green-100 text-green-700",
-    Urgent: "bg-red-100 text-red-700",
+    "Received": "bg-blue-100 text-blue-700",
+    "In Review": "bg-yellow-100 text-yellow-700",
+    "In Progress": "bg-orange-100 text-orange-700",
+    "Resolved": "bg-green-100 text-green-700",
+    "Closed": "bg-gray-100 text-gray-700",
+  };
+
+  // Helper function to format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Not available';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return 'Invalid date';
+    }
   };
 
   const handleView = () => {
     navigate("/admin/report-details", { state: report });
   };
+
+  const handleUpdate = () => {
+    if (onStatusUpdate) {
+      onStatusUpdate(report);
+    }
+  };
+
+
 
   return (
     <div className="bg-white p-5 rounded-xl shadow-md border hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 transition-all duration-300">
@@ -57,7 +81,7 @@ export default function AdminReportCard({ report }) {
 
       {/* Footer */}
       <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
-        <span>Reported on: {date}</span>
+        <span>Reported on: {formatDate(submittedAt || createdAt)}</span>
         <div className="flex gap-3">
           <button
             className="flex items-center gap-1 px-3 py-1 text-sm border rounded-md hover:bg-purple-50 hover:border-purple-300 hover:text-purple-600 transition-colors duration-200"
@@ -65,11 +89,11 @@ export default function AdminReportCard({ report }) {
           >
             <FiEye /> View
           </button>
-          <button className="flex items-center gap-1 px-3 py-1 text-sm border rounded-md hover:bg-yellow-50 hover:border-yellow-300 hover:text-yellow-600 transition-colors duration-200">
+          <button 
+            className="flex items-center gap-1 px-3 py-1 text-sm border rounded-md hover:bg-yellow-50 hover:border-yellow-300 hover:text-yellow-600 transition-colors duration-200"
+            onClick={handleUpdate}
+          >
             <FiEdit /> Update
-          </button>
-          <button className="flex items-center gap-1 px-3 py-1 text-sm border rounded-md hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-colors duration-200 text-green-600">
-            <FiCheckCircle /> Resolve
           </button>
         </div>
       </div>

@@ -131,10 +131,10 @@ export default function Dashboard() {
                 Refresh
               </button>
 
-              <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100 transition">
+              {/* <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-100 transition">
                 <FiFilter size={16} />
                 Filter
-              </button>
+              </button> */}
 
               <button
                 onClick={() => navigate("/reportissue")}
@@ -179,7 +179,7 @@ export default function Dashboard() {
 
           {/* Tabs */}
           <div className="flex flex-wrap border-b gap-4">
-            {["My Reports", "Activity", "Community"].map((tab) => (
+            {["My Reports"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
